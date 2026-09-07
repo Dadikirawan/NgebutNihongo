@@ -256,6 +256,17 @@
   .kana-cell .ch { font-size: 19px; font-weight: 600; }
   .kana-cell .rj { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
   .kana-section-title { font-weight: 700; font-size: 14px; margin: 18px 0 8px; }
+  .kana-quiz-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-top: 10px; margin-bottom: 6px;
+  }
+  .kana-quiz-score { font-size: 12.5px; color: var(--muted); }
+  .kana-quiz-btn {
+    background: var(--indigo-soft); color: var(--indigo); border: none;
+    padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
+    white-space: nowrap;
+  }
+  .kana-prompt { font-size: 56px; font-weight: 700; text-align: center; margin: 10px 0 6px; }
 
   .note-box {
     background: var(--indigo-soft); border-left: 3px solid var(--indigo); border-radius: 6px;
@@ -501,8 +512,8 @@
   <!-- ================= QUIZ ================= -->
   <div class="screen" id="screen-quiz">
     <div class="topbar">
-      <button class="back-btn" onclick="goTo('materi')">←</button>
-      <div class="title">Latihan</div>
+      <button class="back-btn" id="quizBackBtn" onclick="goTo('materi')">←</button>
+      <div class="title" id="quizTopTitle">Latihan</div>
       <div class="spacer"></div>
     </div>
     <div class="content-narrow" style="padding: 18px;">
@@ -518,7 +529,7 @@
         <div class="big-score" id="finalScore"></div>
         <div class="score-lbl">jawaban benar</div>
         <div class="pass-msg" id="passMsg"></div>
-        <button class="cta-btn" onclick="goTo('materi')" style="margin-top:26px;">Kembali ke Bab</button>
+        <button class="cta-btn" id="resultBackBtn" onclick="goTo('materi')" style="margin-top:26px;">Kembali ke Bab</button>
         <button class="cta-btn secondary" onclick="retryQuiz()">Ulangi Latihan</button>
       </div>
     </div>
@@ -1601,10 +1612,10 @@ const KATAKANA_DAKUTEN = [
 function openIntro() {
   const wrap = document.getElementById("kanaTablesWrap");
   wrap.innerHTML = "";
-  wrap.appendChild(buildKanaSection("Hiragana — Dasar (Gojūon)", HIRAGANA_BASE));
-  wrap.appendChild(buildKanaSection("Hiragana — Dakuten & Handakuten", HIRAGANA_DAKUTEN));
-  wrap.appendChild(buildKanaSection("Katakana — Dasar (Gojūon)", KATAKANA_BASE));
-  wrap.appendChild(buildKanaSection("Katakana — Dakuten & Handakuten", KATAKANA_DAKUTEN));
+  wrap.appendChild(buildKanaSection("Hiragana — Dasar (Gojūon)", HIRAGANA_BASE, "hiraganaBase"));
+  wrap.appendChild(buildKanaSection("Hiragana — Dakuten & Handakuten", HIRAGANA_DAKUTEN, "hiraganaDakuten"));
+  wrap.appendChild(buildKanaSection("Katakana — Dasar (Gojūon)", KATAKANA_BASE, "katakanaBase"));
+  wrap.appendChild(buildKanaSection("Katakana — Dakuten & Handakuten", KATAKANA_DAKUTEN, "katakanaDakuten"));
 
   const doneWrap = document.createElement("div");
   doneWrap.className = "checklist";
@@ -1619,7 +1630,19 @@ function openIntro() {
   goTo("intro");
 }
 
-function buildKanaSection(title, data) {
+const KANA_SET_LABELS = {
+  hiraganaBase: "Hiragana Dasar",
+  hiraganaDakuten: "Hiragana Dakuten",
+  katakanaBase: "Katakana Dasar",
+  katakanaDakuten: "Katakana Dakuten"
+};
+
+function kanaScore(key) {
+  if (!store.kanaScores) store.kanaScores = {};
+  return store.kanaScores[key] || 0;
+}
+
+function buildKanaSection(title, data, key) {
   const section = document.createElement("div");
   const heading = document.createElement("div");
   heading.className = "kana-section-title";
@@ -1634,6 +1657,16 @@ function buildKanaSection(title, data) {
     grid.appendChild(cell);
   });
   section.appendChild(grid);
+
+  const score = kanaScore(key);
+  const quizRow = document.createElement("div");
+  quizRow.className = "kana-quiz-row";
+  quizRow.innerHTML = `
+    <span class="kana-quiz-score">${score > 0 ? "Skor terakhir: " + score + "%" + (score >= 80 ? " ✓" : "") : "Belum pernah dicoba"}</span>
+    <button class="kana-quiz-btn" onclick="startKanaQuiz('${key}')">Kuis ${KANA_SET_LABELS[key]} →</button>
+  `;
+  section.appendChild(quizRow);
+
   return section;
 }
 
@@ -1722,7 +1755,11 @@ function shuffle(arr) {
   return a;
 }
 
+let quizMode = "chapter"; // "chapter" | "kana"
+let kanaQuizKey = null;
+
 function startQuiz() {
+  quizMode = "chapter";
   const ch = CHAPTERS.find(c => c.id === currentChapterId);
   const fc = shuffle(ch.quiz.flashcard).slice(0, 8).map(f => ({ type: "flashcard", data: f }));
   const dd = ch.quiz.dropdown.map(d => ({ type: "dropdown", data: d }));
@@ -1730,12 +1767,48 @@ function startQuiz() {
   quizQueue = shuffle([...fc, ...dd, ...bd]);
   quizIndex = 0;
   quizCorrect = 0;
+  document.getElementById("quizTopTitle").textContent = "Latihan";
+  document.getElementById("quizBackBtn").onclick = () => goTo("materi");
   renderQuizProgress();
   renderQuizQuestion();
   goTo("quiz");
 }
 
-function retryQuiz() { startQuiz(); }
+function generateKanaQuestions(dataArray, count) {
+  const picked = shuffle(dataArray).slice(0, Math.min(count, dataArray.length));
+  return picked.map(([ch, rj]) => {
+    const otherRomaji = dataArray.filter(([c2]) => c2 !== ch).map(([, r2]) => r2);
+    const distractors = shuffle([...new Set(otherRomaji)]).slice(0, 3);
+    const options = shuffle([rj, ...distractors]);
+    return [ch, rj, options];
+  });
+}
+
+function startKanaQuiz(key) {
+  quizMode = "kana";
+  kanaQuizKey = key;
+  const dataMap = {
+    hiraganaBase: HIRAGANA_BASE,
+    hiraganaDakuten: HIRAGANA_DAKUTEN,
+    katakanaBase: KATAKANA_BASE,
+    katakanaDakuten: KATAKANA_DAKUTEN
+  };
+  const data = dataMap[key];
+  const questions = generateKanaQuestions(data, 15);
+  quizQueue = questions.map(q => ({ type: "flashcard", kana: true, data: q }));
+  quizIndex = 0;
+  quizCorrect = 0;
+  document.getElementById("quizTopTitle").textContent = "Kuis " + KANA_SET_LABELS[key];
+  document.getElementById("quizBackBtn").onclick = () => openIntro();
+  renderQuizProgress();
+  renderQuizQuestion();
+  goTo("quiz");
+}
+
+function retryQuiz() {
+  if (quizMode === "kana") startKanaQuiz(kanaQuizKey);
+  else startQuiz();
+}
 
 function renderQuizProgress() {
   const wrap = document.getElementById("quizProgress");
@@ -1758,13 +1831,23 @@ function renderQuizQuestion() {
 
   if (item.type === "flashcard") {
     const [meaning, correct, options] = item.data;
-    card.innerHTML = `
-      <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Tebak Kosakata</div>
-      <div class="q-prompt">${meaning}</div>
-      <div class="q-sub">Pilih kata Jepang yang cocok</div>
-      <div class="choice-grid" id="choiceGrid"></div>
-      <div class="feedback-row" id="feedback"></div>
-    `;
+    if (item.kana) {
+      card.innerHTML = `
+        <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Kuis ${KANA_SET_LABELS[kanaQuizKey]}</div>
+        <div class="kana-prompt">${meaning}</div>
+        <div class="q-sub" style="text-align:center;">Ini dibaca apa?</div>
+        <div class="choice-grid" id="choiceGrid"></div>
+        <div class="feedback-row" id="feedback"></div>
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Tebak Kosakata</div>
+        <div class="q-prompt">${meaning}</div>
+        <div class="q-sub">Pilih kata Jepang yang cocok</div>
+        <div class="choice-grid" id="choiceGrid"></div>
+        <div class="feedback-row" id="feedback"></div>
+      `;
+    }
     body.appendChild(card);
     const grid = document.getElementById("choiceGrid");
     shuffle(options).forEach(opt => {
@@ -1909,20 +1992,44 @@ function nextQuestion() {
 function finishQuiz() {
   const total = quizQueue.length;
   const pct = Math.round((quizCorrect / total) * 100);
-  const cs = chapterState(store, currentChapterId);
-  cs.bestScore = Math.max(cs.bestScore, pct);
-  if (pct >= 80) cs.quizPassed = true;
-  saveStore(store);
-
   document.getElementById("finalScore").textContent = `${quizCorrect} / ${total}`;
   const msg = document.getElementById("passMsg");
-  if (pct >= 80) {
-    msg.className = "pass-msg pass";
-    msg.textContent = `🎉 Lulus! Skor ${pct}% — Bab ini ditandai selesai.`;
+  const resultBackBtn = document.getElementById("resultBackBtn");
+
+  if (quizMode === "kana") {
+    if (!store.kanaScores) store.kanaScores = {};
+    store.kanaScores[kanaQuizKey] = Math.max(store.kanaScores[kanaQuizKey] || 0, pct);
+    const allKeys = Object.keys(KANA_SET_LABELS);
+    const allPassed = allKeys.every(k => (store.kanaScores[k] || 0) >= 80);
+    if (allPassed) store.introDone = true;
+    saveStore(store);
+
+    if (pct >= 80) {
+      msg.className = "pass-msg pass";
+      msg.textContent = `🎉 Lulus! Skor ${pct}% untuk ${KANA_SET_LABELS[kanaQuizKey]}.`;
+    } else {
+      msg.className = "pass-msg retry";
+      msg.textContent = `Skor ${pct}% — coba lagi sampai minimal 80% ya.`;
+    }
+    resultBackBtn.textContent = "Kembali ke Hiragana & Katakana";
+    resultBackBtn.onclick = () => openIntro();
   } else {
-    msg.className = "pass-msg retry";
-    msg.textContent = `Skor ${pct}% — coba lagi sampai minimal 80% ya.`;
+    const cs = chapterState(store, currentChapterId);
+    cs.bestScore = Math.max(cs.bestScore, pct);
+    if (pct >= 80) cs.quizPassed = true;
+    saveStore(store);
+
+    if (pct >= 80) {
+      msg.className = "pass-msg pass";
+      msg.textContent = `🎉 Lulus! Skor ${pct}% — Bab ini ditandai selesai.`;
+    } else {
+      msg.className = "pass-msg retry";
+      msg.textContent = `Skor ${pct}% — coba lagi sampai minimal 80% ya.`;
+    }
+    resultBackBtn.textContent = "Kembali ke Bab";
+    resultBackBtn.onclick = () => goTo("materi");
   }
+
   goTo("result");
 }
 
