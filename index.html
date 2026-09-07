@@ -43,6 +43,17 @@
   .dashboard-grid { display: block; }
   .dashboard-side-note { display: none; }
 
+  .continue-banner {
+    background: var(--vermillion-soft); border: 1px solid #E8C4BC; border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .cb-label { font-size: 11.5px; font-weight: 700; color: var(--vermillion); letter-spacing: 0.04em; margin-bottom: 4px; }
+  .cb-title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 12px; line-height: 1.4; }
+  .cb-btn {
+    background: var(--vermillion); color: #fff; border: none; padding: 10px 16px;
+    border-radius: 8px; font-size: 13.5px; font-weight: 700; cursor: pointer; width: 100%;
+  }
+
   @media (min-width: 1024px) {
     .app { max-width: 1180px; }
     .content-narrow { max-width: 760px; }
@@ -423,7 +434,12 @@
             </div>
             <div class="progress-track"><div class="progress-fill" id="overallFill" style="width:0%"></div></div>
           </div>
-          <div class="dashboard-side-note">Klik bab manapun yang sudah terbuka untuk lanjut belajar. Urutan disarankan dari atas ke bawah.</div>
+          <div class="continue-banner" id="continueBanner" style="display:none;">
+            <div class="cb-label" id="cbLabel"></div>
+            <div class="cb-title" id="cbTitle"></div>
+            <button class="cb-btn" id="cbBtn">Lanjutkan →</button>
+          </div>
+          <div class="dashboard-side-note" id="dashboardNote">Klik bab manapun yang sudah terbuka untuk lanjut belajar. Urutan disarankan dari atas ke bawah.</div>
         </div>
         <div class="dashboard-main">
           <div class="section-title">Semua Bab</div>
@@ -1525,6 +1541,64 @@ function goTo(screen) {
 /* =========================================================
    DASHBOARD
    ========================================================= */
+function isChapterDone(id) {
+  const cs = store.chapters[id];
+  return !!(cs && cs.vocab && cs.materi && cs.quizPassed);
+}
+
+function renderContinueBanner() {
+  const banner = document.getElementById("continueBanner");
+  const note = document.getElementById("dashboardNote");
+  const lv = store.lastVisited;
+
+  if (!lv) {
+    banner.style.display = "none";
+    note.style.display = "";
+    return;
+  }
+
+  let label = "";
+  let title = "";
+  let action = null;
+
+  if (lv.type === "intro") {
+    if (store.introDone) {
+      label = "HIRAGANA & KATAKANA SELESAI";
+      title = "Lanjut ke Bab 1: " + CHAPTERS[0].title;
+      action = () => openChapter(1);
+    } else {
+      label = "LANJUTKAN BELAJAR";
+      title = "Hiragana & Katakana";
+      action = () => openIntro();
+    }
+  } else if (lv.type === "chapter") {
+    const id = lv.id;
+    if (isChapterDone(id)) {
+      const next = CHAPTERS.find(c => c.id === id + 1);
+      if (next) {
+        label = "BAB " + id + " SELESAI";
+        title = "Lanjut ke Bab " + next.id + ": " + next.title;
+        action = () => openChapter(next.id);
+      } else {
+        label = "SEMUA BAB SELESAI 🎉";
+        title = "Kamu sudah menyelesaikan semua 25 bab!";
+        action = () => openChapter(id);
+      }
+    } else {
+      const ch = CHAPTERS.find(c => c.id === id);
+      label = "LANJUTKAN BELAJAR";
+      title = "Bab " + id + ": " + (ch ? ch.title : "");
+      action = () => openChapter(id);
+    }
+  }
+
+  document.getElementById("cbLabel").textContent = label;
+  document.getElementById("cbTitle").textContent = title;
+  document.getElementById("cbBtn").onclick = action;
+  banner.style.display = "block";
+  note.style.display = "none";
+}
+
 function renderDashboard() {
   document.getElementById("statStreak").textContent = store.streak;
   const realChapters = CHAPTERS.filter(c => c.id >= 1);
@@ -1534,6 +1608,8 @@ function renderDashboard() {
   }).length;
   document.getElementById("statDone").textContent = doneCount + "/" + TOTAL_CHAPTERS;
   document.getElementById("overallFill").style.width = Math.round((doneCount / TOTAL_CHAPTERS) * 100) + "%";
+
+  renderContinueBanner();
 
   const list = document.getElementById("chapterList");
   list.innerHTML = "";
@@ -1610,6 +1686,9 @@ const KATAKANA_DAKUTEN = [
 ];
 
 function openIntro() {
+  store.lastVisited = { type: "intro" };
+  saveStore(store);
+
   const wrap = document.getElementById("kanaTablesWrap");
   wrap.innerHTML = "";
   wrap.appendChild(buildKanaSection("Hiragana — Dasar (Gojūon)", HIRAGANA_BASE, "hiraganaBase"));
@@ -1678,6 +1757,8 @@ function openChapter(id) {
   if (!ch) return;
   currentChapterId = id;
   const cs = chapterState(store, id);
+  store.lastVisited = { type: "chapter", id: id };
+  saveStore(store);
 
   document.getElementById("materiTopTitle").textContent = "Bab " + id;
   document.getElementById("materiBadge").textContent = "Bab " + id;
