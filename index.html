@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ngebut Nihongo — Belajar Bahasa Jepang dari Nol</title>
+<style>
+  :root {
+    --paper: #F7F4EE;
+    --paper-raised: #FFFFFF;
+    --ink: #2B2823;
+    --muted: #746C60;
+    --line: #E5DFD2;
+    --indigo: #2C4A6E;
+    --indigo-soft: #E7EDF3;
+    --indigo-dark: #16283D;
+    --vermillion: #C0392B;
+    --vermillion-soft: #FBEAE7;
+    --gold: #C9A227;
+    --gold-soft: #FBF4DE;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", "Segoe UI", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.65;
+  }
+  .app { max-width: 680px; margin: 0 auto; min-height: 100vh; position: relative; }
+  .screen { display: none; padding: 20px 18px 90px; }
+  .screen.active { display: block; }
+
+  @media (min-width: 860px) {
+    .app { max-width: 880px; }
+    .screen { padding: 32px 40px 100px; }
+    .vocab-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+    .vocab-cols details.vocab-block { margin-bottom: 0; }
+    .chapter-grid { grid-template-columns: repeat(10, 1fr); }
+  }
+
+  /* ===== Top bar ===== */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px; background: var(--paper);
+    position: sticky; top: 0; z-index: 5; border-bottom: 1px solid var(--line);
+  }
+  .topbar .back-btn { background: none; border: none; font-size: 20px; color: var(--indigo); cursor: pointer; padding: 4px 8px; }
+  .topbar .title { font-weight: 700; font-size: 15px; }
+  .topbar .spacer { width: 32px; }
+
+  /* ===== Landing ===== */
+  .landing-wrap { padding: 10px 4px 40px; position: relative; overflow: hidden; }
+  .landing-kanji {
+    position: absolute; top: -40px; right: -30px; font-size: 220px; font-weight: 700;
+    color: var(--indigo); opacity: 0.05; line-height: 1; pointer-events: none; user-select: none;
+  }
+  .landing-eyebrow { font-size: 13px; font-weight: 700; color: var(--vermillion); letter-spacing: 0.03em; margin-bottom: 10px; }
+  .landing-headline { font-size: 30px; font-weight: 800; line-height: 1.25; margin: 0 0 14px; position: relative; z-index: 1; }
+  .landing-headline .accent { color: var(--indigo); }
+  .landing-sub { font-size: 15.5px; color: var(--muted); margin-bottom: 22px; max-width: 480px; position: relative; z-index: 1; }
+  .landing-points { display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
+  .landing-point { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; }
+  .landing-point .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--vermillion); margin-top: 7px; flex-shrink: 0; }
+  .landing-cta {
+    display: block; width: 100%; background: var(--indigo); color: #fff; border: none;
+    padding: 17px; border-radius: 12px; font-size: 16.5px; font-weight: 700; cursor: pointer;
+    box-shadow: 0 8px 20px rgba(44,74,110,0.25);
+  }
+  .landing-note { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+  .landing-footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 50px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+  @media (min-width: 860px) {
+    .landing-headline { font-size: 40px; max-width: 640px; }
+    .landing-sub { font-size: 17px; max-width: 560px; }
+  }
+
+  /* ===== Dashboard ===== */
+  .hero {
+    background: linear-gradient(135deg, var(--indigo) 0%, var(--indigo-dark) 100%);
+    color: #fff; border-radius: 18px; padding: 22px 20px; margin-bottom: 20px; position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: '学'; position: absolute; right: -10px; bottom: -30px; font-size: 130px; font-weight: 700;
+    opacity: 0.08; line-height: 1;
+  }
+  .hero .brand { font-size: 13px; opacity: 0.75; letter-spacing: 0.02em; margin-bottom: 6px; }
+  .hero .headline { font-size: 21px; font-weight: 700; margin-bottom: 16px; position: relative; z-index: 1; }
+  .hero .stats { display: flex; gap: 22px; position: relative; z-index: 1; }
+  .hero .stat .num { font-size: 24px; font-weight: 700; }
+  .hero .stat .lbl { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+  .progress-track { height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin-top: 14px; overflow: hidden; position: relative; z-index: 1; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.4s ease; }
+
+  .section-title { font-size: 14px; font-weight: 700; color: var(--muted); margin: 22px 0 10px; }
+
+  .chapter-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .chapter-pill {
+    aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; cursor: pointer; border: 1px solid var(--line); background: var(--paper-raised);
+    color: var(--muted); min-height: 30px;
+  }
+  .chapter-pill.available { color: var(--indigo); border-color: var(--indigo); }
+  .chapter-pill.done { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+  .chapter-pill.locked { opacity: 0.4; cursor: default; }
+
+  .chapter-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .chapter-card {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer;
+  }
+  .chapter-card.locked { opacity: 0.5; cursor: default; }
+  .chapter-card .num {
+    width: 36px; height: 36px; border-radius: 8px; background: var(--indigo-soft); color: var(--indigo);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;
+  }
+  .chapter-card .info { flex: 1; }
+  .chapter-card .info .t { font-weight: 600; font-size: 14px; }
+  .chapter-card .info .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .chapter-card .chev { color: var(--muted); }
+  .chapter-card.intro-card { background: var(--vermillion-soft); border-color: var(--vermillion); }
+  .chapter-card.intro-card .num { background: var(--vermillion); color: #fff; font-size: 16px; }
+  .chapter-card.intro-card .s { color: var(--vermillion); font-weight: 600; }
+
+  .kana-table { margin-bottom: 24px; }
+  .kana-table .kt-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+  .kana-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .kana-cell {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 4px; text-align: center;
+  }
+  .kana-cell .k { font-size: 19px; font-weight: 600; }
+  .kana-cell .r { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .kana-cell.empty { background: transparent; border: none; }
+  @media (min-width: 860px) { .kana-grid { grid-template-columns: repeat(10, 1fr); } }
+
+  .conj-table-wrap { margin: 18px 0; background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .conj-table-wrap .ct-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .conj-table-wrap .ct-note { font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+  .conj-group { margin-bottom: 12px; }
+  .conj-group .cg-label { font-size: 12px; font-weight: 700; color: var(--indigo); margin-bottom: 6px; }
+  .conj-row { display: flex; gap: 10px; font-size: 14px; padding: 5px 0; border-top: 1px dashed var(--line); }
+  .conj-row:first-child { border-top: none; }
+  .conj-row .from { flex: 1; }
+  .conj-row .arrow { color: var(--muted); }
+  .conj-row .to { flex: 1; font-weight: 600; color: var(--indigo); }
+
+  /* ===== Materi screen ===== */
+  .chapter-badge {
+    display: inline-block; background: var(--indigo); color: #fff; font-size: 12px; font-weight: 700;
+    padding: 5px 12px; border-radius: 20px; margin-bottom: 10px;
+  }
+  h1.materi-title { font-size: 22px; margin: 0 0 4px; }
+  .materi-sub { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+
+  .plan-box {
+    background: var(--gold-soft); border: 1px solid #EBDCA0; border-radius: 12px;
+    padding: 14px 16px; margin-bottom: 20px;
+  }
+  .plan-box .plan-head { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .plan-box ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .plan-box li { margin-bottom: 3px; }
+
+  details.vocab-block {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px;
+    margin-bottom: 12px; overflow: hidden;
+  }
+  details.vocab-block summary {
+    padding: 13px 16px; font-weight: 600; font-size: 14px; cursor: pointer; list-style: none;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  details.vocab-block summary::-webkit-details-marker { display: none; }
+  details.vocab-block summary::after { content: '▾'; color: var(--muted); }
+  details.vocab-block[open] summary::after { content: '▴'; }
+  .vocab-rows { padding: 0 16px 14px; }
+  .vocab-row { display: flex; gap: 10px; padding: 7px 0; border-top: 1px dashed var(--line); font-size: 14px; align-items: baseline; }
+  .vocab-row:first-child { border-top: none; }
+  .vocab-row .jp { min-width: 92px; font-weight: 600; }
+  .vocab-row .rj { min-width: 84px; color: var(--muted); font-size: 12.5px; }
+  .vocab-row .id { color: var(--muted); font-size: 13px; margin-left: auto; text-align: right; }
+
+  .pattern-block { margin: 22px 0; }
+  .pattern-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--indigo); color: #fff; font-size: 12px; font-weight: 700; margin-right: 8px; }
+  .pattern-jp { font-size: 19px; font-weight: 600; }
+  .pattern-mean { color: var(--indigo); font-size: 13.5px; margin: 2px 0 12px 32px; }
+  .example {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; margin: 8px 0 8px 0;
+  }
+  .example .jp { font-size: 17px; }
+  .example .rj { color: var(--muted); font-size: 12.5px; margin-top: 2px; font-style: italic; }
+  .example .id { color: var(--ink); font-size: 13.5px; margin-top: 4px; }
+  .example .sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .conj-wrap { margin: 22px 0; }
+  .conj-title { font-weight: 700; font-size: 14px; color: var(--indigo); margin-bottom: 10px; }
+  .conj-group { margin-bottom: 12px; }
+  .conj-group-label { font-size: 12.5px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+  table.conj-table { width: 100%; border-collapse: collapse; background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 13.5px; }
+  table.conj-table td { padding: 7px 10px; border-top: 1px dashed var(--line); }
+  table.conj-table tr:first-child td { border-top: none; }
+  table.conj-table td.arrow { color: var(--muted); width: 20px; text-align: center; }
+  table.conj-table td.result { color: var(--vermillion); font-weight: 600; }
+
+  .kana-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 18px; }
+  @media (min-width: 860px) { .kana-grid { grid-template-columns: repeat(10, 1fr); } }
+  .kana-cell {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 4px; text-align: center;
+  }
+  .kana-cell .ch { font-size: 19px; font-weight: 600; }
+  .kana-cell .rj { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .kana-section-title { font-weight: 700; font-size: 14px; margin: 18px 0 8px; }
+
+  .note-box {
+    background: var(--indigo-soft); border-left: 3px solid var(--indigo); border-radius: 6px;
+    padding: 12px 14px; font-size: 13.5px; color: var(--indigo-dark); margin-top: 22px;
+  }
+  .note-box p { margin: 0 0 8px; }
+  .note-box p:last-child { margin-bottom: 0; }
+  .note-box b { color: var(--indigo); }
+
+  .checklist { margin-top: 26px; background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .checklist .ct { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+  .check-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 14px; }
+  .check-row input { width: 18px; height: 18px; accent-color: var(--indigo); }
+
+  .cta-btn {
+    display: block; width: 100%; margin-top: 22px; background: var(--indigo); color: #fff; border: none;
+    padding: 15px; border-radius: 10px; font-size: 15.5px; font-weight: 700; cursor: pointer;
+  }
+  .cta-btn.secondary { background: var(--paper-raised); color: var(--indigo); border: 1px solid var(--indigo); }
+
+  /* ===== Quiz ===== */
+  .quiz-progress { display: flex; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; }
+  .quiz-progress .seg { flex: 1; min-width: 8px; height: 4px; border-radius: 2px; background: var(--line); }
+  .quiz-progress .seg.done { background: var(--vermillion); }
+  .quiz-progress .seg.current { background: var(--indigo); }
+
+  .q-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .q-kind { font-size: 12px; color: var(--muted); font-weight: 700; margin-bottom: 10px; }
+  .q-prompt { font-size: 20px; margin-bottom: 4px; }
+  .q-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+
+  .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .choice-btn {
+    padding: 14px 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--paper);
+    font-size: 15px; cursor: pointer; text-align: center;
+  }
+  .choice-btn.correct { border-color: var(--indigo); background: var(--indigo-soft); }
+  .choice-btn.incorrect { border-color: var(--vermillion); background: var(--vermillion-soft); }
+  .choice-btn:disabled { cursor: default; }
+
+  .sentence-line { font-size: 19px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  select.blank {
+    font-size: 16px; font-family: inherit; padding: 5px 8px;
+    border: 2px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+  }
+  select.blank.correct { border-color: var(--indigo); background: var(--indigo-soft); }
+  select.blank.incorrect { border-color: var(--vermillion); background: var(--vermillion-soft); }
+
+  .build-line {
+    min-height: 52px; display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 10px; border: 2px dashed var(--line); border-radius: 10px; margin: 14px 0;
+    align-items: center;
+  }
+  .build-line .placeholder { color: var(--muted); font-size: 13px; }
+  .tile { font-size: 16px; padding: 8px 13px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); cursor: pointer; user-select: none; }
+  .tile.placed { background: var(--indigo-soft); border-color: var(--indigo); }
+  .bank { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+  .feedback-row { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; font-size: 14px; min-height: 20px; }
+  .feedback-row.correct .verdict { color: var(--indigo); font-weight: 700; }
+  .feedback-row.incorrect .verdict { color: var(--vermillion); font-weight: 700; }
+  .feedback-row .tr { color: var(--muted); }
+
+  .actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn { flex: 1; padding: 13px; border-radius: 10px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn.primary { background: var(--indigo); color: #fff; }
+  .btn.ghost { background: var(--paper); border: 1px solid var(--line); color: var(--ink); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .result-wrap { text-align: center; padding: 30px 0; }
+  .result-wrap .big-score { font-size: 46px; font-weight: 700; color: var(--indigo); }
+  .result-wrap .score-lbl { color: var(--muted); margin-top: 4px; }
+  .result-wrap .pass-msg { margin-top: 16px; font-size: 14px; padding: 10px 14px; border-radius: 8px; display: inline-block; }
+  .pass-msg.pass { background: var(--indigo-soft); color: var(--indigo-dark); }
+  .pass-msg.retry { background: var(--vermillion-soft); color: var(--vermillion); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= LANDING ================= -->
+  <div class="screen active" id="screen-landing">
+    <div class="landing-wrap">
+      <div class="landing-kanji">日</div>
+      <div class="landing-eyebrow">GRATIS · 25 BAB TERSTRUKTUR</div>
+      <h1 class="landing-headline">Bahasa Jepang Itu Susah?<br><span class="accent">Cuma Kalau Belajarnya Salah.</span></h1>
+      <p class="landing-sub">Ngebut Nihongo nyusun ulang jalan belajar Jepang dari nol khusus buat kamu yang belajar sendiri — tanpa guru, tanpa kelas mahal, tanpa nyasar cari-cari materi di internet.</p>
+      <div class="landing-points">
+        <div class="landing-point"><span class="dot"></span><span>25 bab berurutan, dari sapaan pertama sampai bisa bikin kalimat panjang</span></div>
+        <div class="landing-point"><span class="dot"></span><span>Tiap bab ada rencana belajar harian, jadi kamu selalu tahu harus ngapain hari ini</span></div>
+        <div class="landing-point"><span class="dot"></span><span>Latihan interaktif tiap bab — bukan cuma baca teori doang</span></div>
+        <div class="landing-point"><span class="dot"></span><span>Progress & streak belajar otomatis tersimpan di perangkatmu</span></div>
+      </div>
+      <button class="landing-cta" onclick="goTo('dashboard')">Mulai Belajar Sekarang →</button>
+      <div class="landing-note">Gratis, tanpa akun, tanpa kartu kredit.</div>
+      <div class="landing-footer">© 2026 Dadik Irawan — Ngebut Nihongo</div>
+    </div>
+  </div>
+
+  <!-- ================= DASHBOARD ================= -->
+  <div class="screen" id="screen-dashboard">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('landing')">←</button>
+      <div class="title">Ngebut Nihongo</div>
+      <div class="spacer"></div>
+    </div>
+    <div style="padding: 16px 18px 0;">
+      <div class="hero">
+        <div class="brand">NGEBUT NIHONGO</div>
+        <div class="headline">Belajar Jepang dari Nol,<br>Tanpa Guru.</div>
+        <div class="stats">
+          <div class="stat"><div class="num" id="statStreak">0</div><div class="lbl">hari beruntun</div></div>
+          <div class="stat"><div class="num" id="statDone">0/25</div><div class="lbl">bab selesai</div></div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="overallFill" style="width:0%"></div></div>
+      </div>
+
+      <div class="section-title">Semua Bab</div>
+      <div class="chapter-list" id="chapterList"></div>
+
+      <div class="landing-footer">© 2026 Dadik Irawan — Ngebut Nihongo</div>
+    </div>
+  </div>
+
+  <!-- ================= INTRO: HIRAGANA & KATAKANA ================= -->
+  <div class="screen" id="screen-intro">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('dashboard')">←</button>
+      <div class="title">Awal: Hiragana &amp; Katakana</div>
+      <div class="spacer"></div>
+    </div>
+    <div style="padding: 18px;">
+      <span class="chapter-badge" style="background:var(--vermillion);">Sebelum Bab 1</span>
+      <h1 class="materi-title">Hiragana &amp; Katakana</h1>
+      <div class="materi-sub">Kuasai dulu 2 huruf dasar ini — semua bab berikutnya ditulis pakai huruf ini, bukan huruf latin.</div>
+
+      <div class="plan-box">
+        <div class="plan-head">📅 Rencana Belajar</div>
+        <ul>
+          <li>Hari 1-2: Hafalkan seluruh tabel Hiragana, latihan baca pelan-pelan</li>
+          <li>Hari 3-4: Hafalkan seluruh tabel Katakana</li>
+          <li>Hari 5: Review campuran keduanya, lanjut ke Bab 1 kalau sudah lancar baca</li>
+        </ul>
+      </div>
+
+      <div class="note-box" style="margin-top:0; margin-bottom:20px;">
+        <p><b>Hiragana</b> dipakai untuk kata asli Jepang & akhiran tata bahasa. <b>Katakana</b> dipakai untuk kata serapan asing (nama negara, merek, kata pinjaman seperti コーヒー "kopi").</p>
+      </div>
+
+      <div id="kanaTablesWrap"></div>
+      <button class="cta-btn" onclick="goTo('dashboard')">Kembali ke Daftar Bab</button>
+    </div>
+  </div>
+
+  <!-- ================= MATERI ================= -->
+  <div class="screen" id="screen-materi">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('dashboard')">←</button>
+      <div class="title" id="materiTopTitle">Bab</div>
+      <div class="spacer"></div>
+    </div>
+    <div style="padding: 18px;">
+      <span class="chapter-badge" id="materiBadge">Bab 1</span>
+      <h1 class="materi-title" id="materiTitle"></h1>
+      <div class="materi-sub" id="materiFocus"></div>
+
+      <div class="plan-box">
+        <div class="plan-head">📅 Rencana Belajar</div>
+        <ul id="planList"></ul>
+      </div>
+
+      <div class="vocab-cols">
+        <details class="vocab-block" open>
+          <summary>Kosakata Inti <span id="vocabCoreCount"></span></summary>
+          <div class="vocab-rows" id="vocabCoreRows"></div>
+        </details>
+
+        <details class="vocab-block">
+          <summary>Kosakata Tambahan <span id="vocabThemeCount"></span></summary>
+          <div class="vocab-rows" id="vocabThemeRows"></div>
+        </details>
+      </div>
+
+      <div id="patternsWrap"></div>
+
+      <div class="note-box" id="explanationBox"></div>
+
+      <div class="checklist">
+        <div class="ct">Progress Bab Ini</div>
+        <label class="check-row"><input type="checkbox" id="chkVocab"> Kosakata sudah dihafal</label>
+        <label class="check-row"><input type="checkbox" id="chkMateri"> Materi sudah dibaca</label>
+        <label class="check-row"><input type="checkbox" id="chkQuiz" disabled> Quiz sudah lulus (≥80%)</label>
+      </div>
+
+      <button class="cta-btn" onclick="startQuiz()">Mulai Latihan →</button>
+    </div>
+  </div>
+
+  <!-- ================= QUIZ ================= -->
+  <div class="screen" id="screen-quiz">
+    <div class="topbar">
+      <button class="back-btn" onclick="goTo('materi')">←</button>
+      <div class="title">Latihan</div>
+      <div class="spacer"></div>
+    </div>
+    <div style="padding: 18px;">
+      <div class="quiz-progress" id="quizProgress"></div>
+      <div id="quizBody"></div>
+    </div>
+  </div>
+
+  <!-- ================= RESULT ================= -->
+  <div class="screen" id="screen-result">
+    <div style="padding: 60px 18px;">
+      <div class="result-wrap">
+        <div class="big-score" id="finalScore"></div>
+        <div class="score-lbl">jawaban benar</div>
+        <div class="pass-msg" id="passMsg"></div>
+        <button class="cta-btn" onclick="goTo('materi')" style="margin-top:26px;">Kembali ke Bab</button>
+        <button class="cta-btn secondary" onclick="retryQuiz()">Ulangi Latihan</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   DATA — Bab 1 sampai 25, semua konten original (bukan salinan
+   buku manapun). Nama tokoh dipakai konsisten di semua bab:
+   ダディック (Dadik), ヌール (Nur), アッザム (Azzam),
+   ゼハン (Zehan), キンザ (Kinza).
+   ========================================================= */
+const CHAPTERS = [
+{
+  id:1, title:"Perkenalan Diri",
+  focus:"Kalimat nominal です, kalimat tanya, negatif, dan partikel も",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 2"],
+  vocabCore:[["わたし","watashi","saya"],["がくせい","gakusei","murid/mahasiswa"],["せんせい","sensei","guru"],["かいしゃいん","kaishain","karyawan kantor"],["いしゃ","isha","dokter"],["～さん","~san","Bapak/Ibu/Saudara"],["はい","hai","ya"],["いいえ","iie","tidak"],["にほんじん","nihonjin","orang Jepang"],["インドネシアじん","Indoneshia-jin","orang Indonesia"]],
+  vocabTheme:[["エンジニア","enjinia","insinyur"],["かんごし","kangoshi","perawat"],["こうむいん","koumuin","pegawai negeri"],["べんごし","bengoshi","pengacara"],["うんてんしゅ","untenshu","supir"],["てんいん","ten-in","pramuniaga"],["りょうりにん","ryourinin","koki"],["けいさつかん","keisatsukan","polisi"],["かんこくじん","kankokujin","orang Korea"],["アメリカじん","Amerika-jin","orang Amerika"]],
+  patterns:[
+    {jp:"〜は〜です",mean:"→ ~ adalah ~",examples:[
+      {jp:"わたしは がくせいです。",rj:"Watashi wa gakusei desu.",id:"Saya adalah murid."},
+      {jp:"ダディックさんは せんせいです。",rj:"Dadikku-san wa sensei desu.",id:"Dadik adalah guru."}]},
+    {jp:"〜は〜ですか",mean:"→ Apakah ~ adalah ~?",examples:[
+      {jp:"ダディックさんは せんせいですか。",rj:"Dadikku-san wa sensei desu ka.",id:"Apakah Dadik guru?",sub:"…はい、せんせいです。 (Ya, guru.)"},
+      {jp:"ヌールさんは がくせいですか。",rj:"Nuuru-san wa gakusei desu ka.",id:"Apakah Nur murid?",sub:"…いいえ、がくせいじゃないです。いしゃです。 (Bukan, dia dokter.)"}]},
+    {jp:"〜は〜じゃないです",mean:"→ ~ bukan ~",examples:[
+      {jp:"わたしは かいしゃいんじゃないです。",rj:"Watashi wa kaishain janai desu.",id:"Saya bukan karyawan kantor."},
+      {jp:"わたしは にほんじんじゃないです。インドネシアじんです。",rj:"Watashi wa nihonjin janai desu. Indoneshia-jin desu.",id:"Saya bukan orang Jepang. Saya orang Indonesia."}]},
+    {jp:"〜も〜です",mean:"→ ~ juga ~",examples:[
+      {jp:"わたしは がくせいです。ダディックさんも がくせいです。",rj:"Watashi wa gakusei desu. Dadikku-san mo gakusei desu.",id:"Saya murid. Dadik juga murid."},
+      {jp:"ヌールさんは にほんじんです。アッザムさんも にほんじんです。",rj:"Nuuru-san wa nihonjin desu. Azzamu-san mo nihonjin desu.",id:"Nur orang Jepang. Azzam juga orang Jepang."}]}
+  ],
+  explanation:["Kalimat dasar bahasa Jepang sering berbentuk <b>[Topik] は [Keterangan] です</b> — anggap です seperti kata \"adalah\".","Untuk bertanya, tambahkan <b>か</b> di akhir kalimat, tanpa mengubah susunan kata.","Untuk menyangkal, ganti です jadi <b>じゃないです</b>.","Partikel <b>も</b> dipakai untuk menyatakan \"juga\" — ia menggantikan posisi は, bukan ditambahkan bersamanya.","Partikel <b>は</b> dibaca \"wa\", bukan \"ha\", saat berfungsi sebagai partikel topik."],
+  quiz:{
+    flashcard:[["saya","わたし",["がくせい","せんせい","わたし","はい"]],["murid/mahasiswa","がくせい",["がくせい","いしゃ","さん","いいえ"]],["guru","せんせい",["かいしゃいん","せんせい","にほんじん","はい"]],["karyawan kantor","かいしゃいん",["いしゃ","かいしゃいん","がくせい","わたし"]],["dokter","いしゃ",["べんごし","かんごし","いしゃ","てんいん"]],["orang Jepang","にほんじん",["かんこくじん","にほんじん","アメリカじん","インドネシアじん"]],["perawat","かんごし",["けいさつかん","うんてんしゅ","かんごし","こうむいん"]],["pengacara","べんごし",["べんごし","りょうりにん","エンジニア","てんいん"]]],
+    dropdown:[
+      {before:"わたし",options:["は","が","も"],answer:"は",after:"がくせいです。",tr:"Saya adalah murid."},
+      {before:"ダディックさんは せんせい",options:["です","ですか","じゃないです"],answer:"ですか",after:"。",tr:"Apakah Dadik guru?"},
+      {before:"わたしは かいしゃいん",options:["です","じゃないです","ですか"],answer:"じゃないです",after:"。",tr:"Saya bukan karyawan kantor."},
+      {before:"わたしは がくせいです。ダディックさん",options:["は","も","が"],answer:"も",after:"がくせいです。",tr:"Saya murid. Dadik juga murid."}
+    ],
+    build:[
+      {prompt:"Susun: \"Saya adalah murid.\"",tiles:["わたし","は","がくせい","です"],answer:["わたし","は","がくせい","です"],tr:"Watashi wa gakusei desu."},
+      {prompt:"Susun: \"Apakah Nur murid?\"",tiles:["ヌールさん","は","がくせい","ですか"],answer:["ヌールさん","は","がくせい","ですか"],tr:"Nuuru-san wa gakusei desu ka."},
+      {prompt:"Susun: \"Dadik juga murid.\"",tiles:["ダディックさん","も","がくせい","です"],answer:["ダディックさん","も","がくせい","です"],tr:"Dadikku-san mo gakusei desu."}
+    ]
+  }
+},
+{
+  id:2, title:"Ini, Itu, dan Kepemilikan",
+  focus:"これ/それ/あれ, この/その/あの, dan partikel の (kepemilikan)",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 3"],
+  vocabCore:[["これ","kore","ini"],["それ","sore","itu"],["あれ","are","itu (jauh)"],["この","kono","~ ini"],["その","sono","~ itu"],["あの","ano","~ itu (jauh)"],["ほん","hon","buku"],["かばん","kaban","tas"],["とけい","tokei","jam/arloji"],["だれ","dare","siapa"]],
+  vocabTheme:[["つくえ","tsukue","meja"],["いす","isu","kursi"],["ノート","nooto","buku catatan"],["ペン","pen","pulpen"],["えんぴつ","enpitsu","pensil"],["けしゴム","keshigomu","penghapus"],["じしょ","jisho","kamus"],["かぎ","kagi","kunci"],["さいふ","saifu","dompet"],["めがね","megane","kacamata"]],
+  patterns:[
+    {jp:"これ/それ/あれ は〜です",mean:"→ Ini/itu/itu (di sana) adalah ~",examples:[
+      {jp:"これは ほんです。",rj:"Kore wa hon desu.",id:"Ini buku."},
+      {jp:"それは ダディックさんの かばんです。",rj:"Sore wa Dadikku-san no kaban desu.",id:"Itu tas Dadik."}]},
+    {jp:"この/その/あの + Noun",mean:"→ Kata benda ini/itu/itu (di sana)",examples:[
+      {jp:"この ほんは ヌールさんのです。",rj:"Kono hon wa Nuuru-san no desu.",id:"Buku ini punya Nur."},
+      {jp:"その ペンは アッザムさんのです。",rj:"Sono pen wa Azzamu-san no desu.",id:"Pulpen itu punya Azzam."}]},
+    {jp:"〜の〜",mean:"→ [pemilik] no [benda]",examples:[
+      {jp:"これは ゼハンさんの かばんです。",rj:"Kore wa Zehan-san no kaban desu.",id:"Ini tas Zehan."},
+      {jp:"あれは キンザさんの とけいです。",rj:"Are wa Kinza-san no tokei desu.",id:"Itu jam Kinza."}]},
+    {jp:"〜は だれのですか",mean:"→ ~ punya siapa?",examples:[
+      {jp:"この ノートは だれのですか。",rj:"Kono nooto wa dare no desu ka.",id:"Buku catatan ini punya siapa?",sub:"…ヌールさんのです。 (Punya Nur.)"},
+      {jp:"その かぎは だれのですか。",rj:"Sono kagi wa dare no desu ka.",id:"Kunci itu punya siapa?",sub:"…わたしのです。 (Punya saya.)"}]}
+  ],
+  explanation:["これ/それ/あれ berdiri sendiri sebagai kata ganti (\"ini/itu/itu di sana\"), sedangkan <b>この/その/あの</b> harus diikuti kata benda — tidak bisa berdiri sendiri.","Partikel <b>の</b> menandai kepemilikan: [pemilik]の[benda].","の juga bisa berdiri sendiri menggantikan kata benda yang sudah disebut sebelumnya, seperti \"ヌールさんのです\" (punya Nur).","<b>だれ</b> artinya \"siapa\", dipakai untuk menanyakan kepemilikan."],
+  quiz:{
+    flashcard:[["buku","ほん",["ほん","かばん","とけい","ペン"]],["tas","かばん",["かばん","ほん","ノート","かぎ"]],["jam/arloji","とけい",["とけい","めがね","さいふ","じしょ"]],["siapa","だれ",["だれ","これ","それ","あれ"]],["meja","つくえ",["つくえ","いす","ノート","えんぴつ"]],["kursi","いす",["いす","つくえ","ペン","かぎ"]],["kamus","じしょ",["じしょ","ノート","けしゴム","さいふ"]],["kunci","かぎ",["かぎ","めがね","とけい","ほん"]]],
+    dropdown:[
+      {before:"",options:["これ","それ","あれ"],answer:"これ",after:"は ほんです。",tr:"Ini buku."},
+      {before:"",options:["この","その","あの"],answer:"この",after:"ほんは ヌールさんのです。",tr:"Buku ini punya Nur."},
+      {before:"それは ダディックさん",options:["の","も","は"],answer:"の",after:"かばんです。",tr:"Itu tas Dadik."},
+      {before:"このノートは",options:["だれ","どこ","なん"],answer:"だれ",after:"のですか。",tr:"Buku catatan ini punya siapa?"}
+    ],
+    build:[
+      {prompt:"Susun: \"Ini buku.\"",tiles:["これ","は","ほん","です"],answer:["これ","は","ほん","です"],tr:"Kore wa hon desu."},
+      {prompt:"Susun: \"Ini tas Zehan.\"",tiles:["これ","は","ゼハンさんの","かばん","です"],answer:["これ","は","ゼハンさんの","かばん","です"],tr:"Kore wa Zehan-san no kaban desu."},
+      {prompt:"Susun: \"Kunci itu punya siapa?\"",tiles:["その","かぎ","は","だれの","ですか"],answer:["その","かぎ","は","だれの","ですか"],tr:"Sono kagi wa dare no desu ka."}
+    ]
+  }
+},
+{
+  id:3, title:"Menunjukkan Tempat",
+  focus:"ここ/そこ/あそこ, こちら/あちら, どこ, dan partikel の untuk asal/afiliasi",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 4"],
+  vocabCore:[["ここ","koko","di sini"],["そこ","soko","di situ"],["あそこ","asoko","di sana"],["こちら","kochira","ke sini (sopan)"],["あちら","achira","ke sana (sopan)"],["どこ","doko","di mana"],["がっこう","gakkou","sekolah"],["かいしゃ","kaisha","kantor/perusahaan"],["としょかん","toshokan","perpustakaan"],["えき","eki","stasiun"]],
+  vocabTheme:[["トイレ","toire","toilet"],["びょういん","byouin","rumah sakit"],["ぎんこう","ginkou","bank"],["スーパー","suupaa","supermarket"],["こうえん","kouen","taman"],["レストラン","resutoran","restoran"],["だいがく","daigaku","universitas"],["ホテル","hoteru","hotel"],["くうこう","kuukou","bandara"],["やくしょ","yakusho","kantor pemerintah"]],
+  patterns:[
+    {jp:"ここ/そこ/あそこ は〜です",mean:"→ Di sini/situ/sana adalah ~",examples:[
+      {jp:"ここは がっこうです。",rj:"Koko wa gakkou desu.",id:"Di sini sekolah."},
+      {jp:"あそこは としょかんです。",rj:"Asoko wa toshokan desu.",id:"Di sana perpustakaan."}]},
+    {jp:"〜は どこですか",mean:"→ ~ di mana?",examples:[
+      {jp:"としょかんは どこですか。",rj:"Toshokan wa doko desu ka.",id:"Perpustakaan di mana?",sub:"…あそこです。 (Di sana.)"},
+      {jp:"トイレは どこですか。",rj:"Toire wa doko desu ka.",id:"Toilet di mana?",sub:"…そこです。 (Di situ.)"}]},
+    {jp:"こちら/あちら",mean:"→ Versi sopan menunjuk arah/orang",examples:[
+      {jp:"こちらは ダディックさんです。",rj:"Kochira wa Dadikku-san desu.",id:"Ini (perkenalkan) Dadik."},
+      {jp:"あちらは かいしゃです。",rj:"Achira wa kaisha desu.",id:"Itu (arah) kantornya."}]},
+    {jp:"〜は〜の〜です",mean:"→ ~ berasal/berafiliasi dari ~",examples:[
+      {jp:"ヌールさんは だいがくの がくせいです。",rj:"Nuuru-san wa daigaku no gakusei desu.",id:"Nur mahasiswa universitas itu."},
+      {jp:"アッザムさんは かいしゃの エンジニアです。",rj:"Azzamu-san wa kaisha no enjinia desu.",id:"Azzam insinyur di kantor itu."}]}
+  ],
+  explanation:["ここ/そこ/あそこ menunjuk tempat, mengikuti pola sama seperti これ/それ/あれ.","<b>こちら/あちら</b> adalah versi lebih sopan, sering dipakai memperkenalkan orang secara formal atau menunjuk arah.","<b>どこ</b> artinya \"di mana\".","Partikel の di sini menghubungkan organisasi/tempat dengan orang yang berasal/berafiliasi dengannya."],
+  quiz:{
+    flashcard:[["sekolah","がっこう",["がっこう","かいしゃ","としょかん","えき"]],["kantor","かいしゃ",["かいしゃ","がっこう","びょういん","ぎんこう"]],["perpustakaan","としょかん",["としょかん","スーパー","こうえん","ホテル"]],["stasiun","えき",["えき","くうこう","やくしょ","レストラン"]],["rumah sakit","びょういん",["びょういん","ぎんこう","だいがく","トイレ"]],["bank","ぎんこう",["ぎんこう","スーパー","こうえん","ホテル"]],["taman","こうえん",["こうえん","レストラン","だいがく","くうこう"]],["universitas","だいがく",["だいがく","がっこう","やくしょ","えき"]]],
+    dropdown:[
+      {before:"",options:["ここ","そこ","あそこ"],answer:"ここ",after:"は がっこうです。",tr:"Di sini sekolah."},
+      {before:"としょかんは",options:["どこ","だれ","なん"],answer:"どこ",after:"ですか。",tr:"Perpustakaan di mana?"},
+      {before:"",options:["こちら","ここ","この"],answer:"こちら",after:"は ダディックさんです。",tr:"Ini (perkenalkan) Dadik."},
+      {before:"ヌールさんは だいがく",options:["の","も","は"],answer:"の",after:"がくせいです。",tr:"Nur mahasiswa universitas itu."}
+    ],
+    build:[
+      {prompt:"Susun: \"Di sini sekolah.\"",tiles:["ここ","は","がっこう","です"],answer:["ここ","は","がっこう","です"],tr:"Koko wa gakkou desu."},
+      {prompt:"Susun: \"Perpustakaan di mana?\"",tiles:["としょかん","は","どこ","ですか"],answer:["としょかん","は","どこ","ですか"],tr:"Toshokan wa doko desu ka."},
+      {prompt:"Susun: \"Azzam insinyur di kantor itu.\"",tiles:["アッザムさん","は","かいしゃの","エンジニア","です"],answer:["アッザムさん","は","かいしゃの","エンジニア","です"],tr:"Azzamu-san wa kaisha no enjinia desu."}
+    ]
+  }
+},
+{
+  id:4, title:"Angka, Umur, dan Harga",
+  focus:"Angka dasar, menanyakan harga (いくら) dan umur (なんさい)",
+  plan:["Hari 1: Hafalkan angka 1-10 + kosakata harga","Hari 2: Baca semua pola + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 5"],
+  vocabCore:[["いち","ichi","satu"],["に","ni","dua"],["さん","san","tiga"],["よん","yon","empat"],["ご","go","lima"],["ろく","roku","enam"],["なな","nana","tujuh"],["はち","hachi","delapan"],["きゅう","kyuu","sembilan"],["じゅう","juu","sepuluh"]],
+  vocabTheme:[["ひゃく","hyaku","seratus"],["せん","sen","seribu"],["いくら","ikura","berapa harga"],["なんさい","nansai","berapa umur"],["さい","sai","~ tahun (umur)"],["えん","en","yen"],["はたち","hatachi","20 tahun"],["にじゅう","nijuu","dua puluh"],["さんじゅう","sanjuu","tiga puluh"],["ごじゅう","gojuu","lima puluh"]],
+  patterns:[
+    {jp:"これは いくらですか",mean:"→ Ini berapa harganya?",examples:[
+      {jp:"この ほんは いくらですか。",rj:"Kono hon wa ikura desu ka.",id:"Buku ini berapa?",sub:"…せんえんです。 (1000 yen.)"},
+      {jp:"その かばんは いくらですか。",rj:"Sono kaban wa ikura desu ka.",id:"Tas itu berapa?",sub:"…ごせんえんです。 (5000 yen.)"}]},
+    {jp:"〜さいです",mean:"→ Berumur ~ tahun",examples:[
+      {jp:"ダディックさんは にじゅうごさいです。",rj:"Dadikku-san wa nijuugo-sai desu.",id:"Dadik 25 tahun."},
+      {jp:"キンザさんは なんさいですか。",rj:"Kinza-san wa nansai desu ka.",id:"Kinza umur berapa?",sub:"…はたちです。 (20 tahun.)"}]},
+    {jp:"なんさい/いくつ",mean:"→ Dua cara menanyakan umur",examples:[
+      {jp:"アッザムさんは なんさいですか。",rj:"Azzamu-san wa nansai desu ka.",id:"Azzam umur berapa?",sub:"…にじゅうはっさいです。 (28 tahun.)"},
+      {jp:"ヌールさんは いくつですか。",rj:"Nuuru-san wa ikutsu desu ka.",id:"Nur umur berapa?",sub:"…じゅうきゅうさいです。 (19 tahun.)"}]},
+    {jp:"harga barang lain",mean:"→ Latihan angka besar",examples:[
+      {jp:"この じしょは いくらですか。",rj:"Kono jisho wa ikura desu ka.",id:"Kamus ini berapa?",sub:"…にせんえんです。 (2000 yen.)"},
+      {jp:"その とけいは いくらですか。",rj:"Sono tokei wa ikura desu ka.",id:"Jam itu berapa?",sub:"…ごせんえんです。 (5000 yen.)"}]}
+  ],
+  explanation:["Angka dasar 1-10 wajib dihafal karena jadi dasar semua angka besar (11=じゅういち, 20=にじゅう, dst).","Umur dibaca dengan akhiran <b>さい</b>, kecuali umur 20 tahun yang punya bacaan khusus: <b>はたち</b> (bukan にじゅっさい).","<b>いくら</b> dipakai untuk tanya harga, <b>なんさい/いくつ</b> untuk tanya umur."],
+  quiz:{
+    flashcard:[["satu","いち",["いち","に","さん","よん"]],["dua","に",["に","ご","ろく","なな"]],["lima","ご",["ご","はち","きゅう","じゅう"]],["sepuluh","じゅう",["じゅう","ひゃく","せん","さん"]],["seratus","ひゃく",["ひゃく","せん","じゅう","えん"]],["berapa harga","いくら",["いくら","なんさい","いくつ","えん"]],["20 tahun","はたち",["はたち","にじゅう","さんじゅう","じゅう"]],["yen","えん",["えん","さい","ひゃく","せん"]]],
+    dropdown:[
+      {before:"このほんは",options:["いくら","なんさい","どこ"],answer:"いくら",after:"ですか。",tr:"Buku ini berapa harganya?"},
+      {before:"キンザさんは",options:["なんさい","いくら","だれ"],answer:"なんさい",after:"ですか。",tr:"Kinza umur berapa?"},
+      {before:"にじゅっさいは",options:["はたち","にじゅう","じゅう"],answer:"はたち",after:"ともいいます。",tr:"20 tahun juga disebut hatachi."},
+      {before:"このかばんは",options:["せんえん","せん","いち"],answer:"せんえん",after:"です。",tr:"Tas ini 1000 yen."}
+    ],
+    build:[
+      {prompt:"Susun: \"Buku ini berapa?\"",tiles:["この","ほん","は","いくら","ですか"],answer:["この","ほん","は","いくら","ですか"],tr:"Kono hon wa ikura desu ka."},
+      {prompt:"Susun: \"Dadik 25 tahun.\"",tiles:["ダディックさん","は","にじゅうご","さい","です"],answer:["ダディックさん","は","にじゅうご","さい","です"],tr:"Dadikku-san wa nijuugo-sai desu."},
+      {prompt:"Susun: \"Nur umur berapa?\"",tiles:["ヌールさん","は","いくつ","ですか"],answer:["ヌールさん","は","いくつ","ですか"],tr:"Nuuru-san wa ikutsu desu ka."}
+    ]
+  }
+},
+{
+  id:5, title:"Pergi, Datang, Pulang",
+  focus:"Kata kerja arah いきます/きます/かえります, partikel に/へ, dan hari",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 6"],
+  vocabCore:[["いきます","ikimasu","pergi"],["きます","kimasu","datang"],["かえります","kaerimasu","pulang"],["うち","uchi","rumah"],["いつ","itsu","kapan"],["きょう","kyou","hari ini"],["あした","ashita","besok"],["きのう","kinou","kemarin"],["がっこう","gakkou","sekolah"],["かいしゃ","kaisha","kantor"]],
+  vocabTheme:[["げつようび","getsuyoubi","hari Senin"],["かようび","kayoubi","hari Selasa"],["すいようび","suiyoubi","hari Rabu"],["もくようび","mokuyoubi","hari Kamis"],["きんようび","kinyoubi","hari Jumat"],["どようび","doyoubi","hari Sabtu"],["にちようび","nichiyoubi","hari Minggu"],["あさ","asa","pagi"],["ひる","hiru","siang"],["よる","yoru","malam"]],
+  patterns:[
+    {jp:"〜へ/に いきます",mean:"→ Pergi ke ~",examples:[
+      {jp:"ダディックさんは がっこうへ いきます。",rj:"Dadikku-san wa gakkou e ikimasu.",id:"Dadik pergi ke sekolah."},
+      {jp:"ヌールさんは かいしゃに いきます。",rj:"Nuuru-san wa kaisha ni ikimasu.",id:"Nur pergi ke kantor."}]},
+    {jp:"きます/かえります",mean:"→ Datang / pulang",examples:[
+      {jp:"アッザムさんは うちに かえります。",rj:"Azzamu-san wa uchi ni kaerimasu.",id:"Azzam pulang ke rumah."},
+      {jp:"キンザさんは がっこうに きます。",rj:"Kinza-san wa gakkou ni kimasu.",id:"Kinza datang ke sekolah."}]},
+    {jp:"いつ〜ますか",mean:"→ Kapan ~?",examples:[
+      {jp:"いつ がっこうへ いきますか。",rj:"Itsu gakkou e ikimasu ka.",id:"Kapan pergi ke sekolah?",sub:"…げつようびに いきます。 (Hari Senin.)"},
+      {jp:"いつ かえりますか。",rj:"Itsu kaerimasu ka.",id:"Kapan pulang?",sub:"…にちようびに かえります。 (Hari Minggu.)"}]},
+    {jp:"きょう/あした/きのう",mean:"→ Hari ini/besok/kemarin",examples:[
+      {jp:"きょうは かようびです。",rj:"Kyou wa kayoubi desu.",id:"Hari ini hari Selasa."},
+      {jp:"あしたは すいようびです。",rj:"Ashita wa suiyoubi desu.",id:"Besok hari Rabu."}]}
+  ],
+  explanation:["<b>に</b> dan <b>へ</b> sama-sama menunjukkan arah tujuan (ke mana) dan bisa saling menggantikan untuk kata kerja pergi/datang/pulang.","に juga dipakai untuk menunjukkan waktu spesifik (nama hari) sebelum kata kerja.","<b>いきます</b> (pergi), <b>きます</b> (datang), <b>かえります</b> (pulang) adalah tiga kata kerja arah dasar.","<b>いつ</b> artinya \"kapan\"."],
+  quiz:{
+    flashcard:[["pergi","いきます",["いきます","きます","かえります","うち"]],["datang","きます",["きます","いきます","かえります","いつ"]],["pulang","かえります",["かえります","いきます","きます","きょう"]],["rumah","うち",["うち","がっこう","かいしゃ","えき"]],["kapan","いつ",["いつ","どこ","だれ","なに"]],["hari ini","きょう",["きょう","あした","きのう","よる"]],["hari Senin","げつようび",["げつようび","かようび","すいようび","どようび"]],["hari Minggu","にちようび",["にちようび","きんようび","もくようび","かようび"]]],
+    dropdown:[
+      {before:"ダディックさんは がっこう",options:["へ","を","が"],answer:"へ",after:"いきます。",tr:"Dadik pergi ke sekolah."},
+      {before:"",options:["いつ","どこ","だれ"],answer:"いつ",after:"がっこうへ いきますか。",tr:"Kapan pergi ke sekolah?"},
+      {before:"きょうは",options:["かようび","がっこう","うち"],answer:"かようび",after:"です。",tr:"Hari ini hari Selasa."},
+      {before:"アッザムさんは うち",options:["に","を","へ"],answer:"に",after:"かえります。",tr:"Azzam pulang ke rumah. (へ juga benar, に lebih umum di sini)"}
+    ],
+    build:[
+      {prompt:"Susun: \"Nur pergi ke kantor.\"",tiles:["ヌールさん","は","かいしゃ","に","いきます"],answer:["ヌールさん","は","かいしゃ","に","いきます"],tr:"Nuuru-san wa kaisha ni ikimasu."},
+      {prompt:"Susun: \"Kapan pulang?\"",tiles:["いつ","かえります","か"],answer:["いつ","かえります","か"],tr:"Itsu kaerimasu ka."},
+      {prompt:"Susun: \"Besok hari Rabu.\"",tiles:["あした","は","すいようび","です"],answer:["あした","は","すいようび","です"],tr:"Ashita wa suiyoubi desu."}
+    ]
+  }
+},
+{
+  id:6, title:"Makan, Minum, Beli",
+  focus:"Partikel を dengan kata kerja transitif dan kata tanya なに",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 7"],
+  vocabCore:[["たべます","tabemasu","makan"],["のみます","nomimasu","minum"],["かいます","kaimasu","beli"],["よみます","yomimasu","baca"],["みます","mimasu","lihat/nonton"],["ごはん","gohan","nasi"],["みず","mizu","air"],["ほん","hon","buku"],["しんぶん","shinbun","koran"],["テレビ","terebi","televisi"]],
+  vocabTheme:[["パン","pan","roti"],["コーヒー","koohii","kopi"],["おちゃ","ocha","teh"],["ジュース","juusu","jus"],["えいが","eiga","film"],["ざっし","zasshi","majalah"],["くだもの","kudamono","buah"],["やさい","yasai","sayur"],["にく","niku","daging"],["さかな","sakana","ikan"]],
+  patterns:[
+    {jp:"〜を たべます/のみます",mean:"→ Makan/minum ~",examples:[
+      {jp:"ダディックさんは ごはんを たべます。",rj:"Dadikku-san wa gohan o tabemasu.",id:"Dadik makan nasi."},
+      {jp:"ヌールさんは みずを のみます。",rj:"Nuuru-san wa mizu o nomimasu.",id:"Nur minum air."}]},
+    {jp:"〜を かいます",mean:"→ Beli ~",examples:[
+      {jp:"アッザムさんは パンを かいます。",rj:"Azzamu-san wa pan o kaimasu.",id:"Azzam beli roti."},
+      {jp:"キンザさんは くだものを かいます。",rj:"Kinza-san wa kudamono o kaimasu.",id:"Kinza beli buah."}]},
+    {jp:"〜を よみます/みます",mean:"→ Baca/lihat ~",examples:[
+      {jp:"ゼハンさんは しんぶんを よみます。",rj:"Zehan-san wa shinbun o yomimasu.",id:"Zehan baca koran."},
+      {jp:"ダディックさんは テレビを みます。",rj:"Dadikku-san wa terebi o mimasu.",id:"Dadik nonton TV."}]},
+    {jp:"なにを〜ますか",mean:"→ Melakukan apa?",examples:[
+      {jp:"なにを たべますか。",rj:"Nani o tabemasu ka.",id:"Makan apa?",sub:"…ごはんを たべます。 (Makan nasi.)"},
+      {jp:"なにを のみますか。",rj:"Nani o nomimasu ka.",id:"Minum apa?",sub:"…おちゃを のみます。 (Minum teh.)"}]}
+  ],
+  explanation:["Partikel <b>を</b> menandai objek langsung dari kata kerja — apa yang di-...kan.","<b>なに</b> artinya \"apa\", dipakai dengan pola なにを〜ますか untuk menanyakan objek suatu aktivitas."],
+  quiz:{
+    flashcard:[["makan","たべます",["たべます","のみます","かいます","みます"]],["minum","のみます",["のみます","たべます","よみます","かいます"]],["beli","かいます",["かいます","たべます","のみます","みます"]],["baca","よみます",["よみます","みます","かいます","たべます"]],["nasi","ごはん",["ごはん","みず","パン","にく"]],["air","みず",["みず","おちゃ","ジュース","コーヒー"]],["roti","パン",["パン","くだもの","やさい","にく"]],["ikan","さかな",["さかな","にく","やさい","くだもの"]]],
+    dropdown:[
+      {before:"ダディックさんは ごはん",options:["を","が","に"],answer:"を",after:"たべます。",tr:"Dadik makan nasi."},
+      {before:"",options:["なに","だれ","どこ"],answer:"なに",after:"を のみますか。",tr:"Minum apa?"},
+      {before:"アッザムさんは パン",options:["を","へ","の"],answer:"を",after:"かいます。",tr:"Azzam beli roti."},
+      {before:"ゼハンさんは しんぶん",options:["を","が","も"],answer:"を",after:"よみます。",tr:"Zehan baca koran."}
+    ],
+    build:[
+      {prompt:"Susun: \"Nur minum air.\"",tiles:["ヌールさん","は","みず","を","のみます"],answer:["ヌールさん","は","みず","を","のみます"],tr:"Nuuru-san wa mizu o nomimasu."},
+      {prompt:"Susun: \"Kinza beli buah.\"",tiles:["キンザさん","は","くだもの","を","かいます"],answer:["キンザさん","は","くだもの","を","かいます"],tr:"Kinza-san wa kudamono o kaimasu."},
+      {prompt:"Susun: \"Makan apa?\"",tiles:["なに","を","たべます","か"],answer:["なに","を","たべます","か"],tr:"Nani o tabemasu ka."}
+    ]
+  }
+},
+{
+  id:7, title:"Tempat, Alat, dan Bersama Siapa",
+  focus:"Partikel で (tempat/alat) dan と (bersama)",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 8"],
+  vocabCore:[["レストラン","resutoran","restoran"],["いえ","ie","rumah"],["ともだち","tomodachi","teman"],["かぞく","kazoku","keluarga"],["はし","hashi","sumpit"],["フォーク","fooku","garpu"],["バス","basu","bus"],["でんしゃ","densha","kereta"],["くるま","kuruma","mobil"],["じてんしゃ","jitensha","sepeda"]],
+  vocabTheme:[["ナイフ","naifu","pisau"],["スプーン","supuun","sendok"],["あるいて","aruite","dengan berjalan kaki"],["ひとりで","hitori de","sendirian"],["いっしょに","issho ni","bersama-sama"],["まいにち","mainichi","setiap hari"],["べんきょうします","benkyoushimasu","belajar"],["あそびます","asobimasu","bermain"],["えいが","eiga","film"],["みんな","minna","semua orang"]],
+  patterns:[
+    {jp:"〜で〜ます (tempat)",mean:"→ Melakukan sesuatu di ~",examples:[
+      {jp:"レストランで ごはんを たべます。",rj:"Resutoran de gohan o tabemasu.",id:"Makan nasi di restoran."},
+      {jp:"いえで テレビを みます。",rj:"Ie de terebi o mimasu.",id:"Nonton TV di rumah."}]},
+    {jp:"〜で〜ます (alat)",mean:"→ Melakukan sesuatu pakai ~",examples:[
+      {jp:"はしで たべます。",rj:"Hashi de tabemasu.",id:"Makan pakai sumpit."},
+      {jp:"バスで がっこうへ いきます。",rj:"Basu de gakkou e ikimasu.",id:"Pergi ke sekolah naik bus."}]},
+    {jp:"〜と〜ます",mean:"→ Bersama siapa",examples:[
+      {jp:"ともだちと えいがを みます。",rj:"Tomodachi to eiga o mimasu.",id:"Nonton film bareng teman."},
+      {jp:"かぞくと ごはんを たべます。",rj:"Kazoku to gohan o tabemasu.",id:"Makan bareng keluarga."}]},
+    {jp:"ひとりで/いっしょに",mean:"→ Sendirian / bersama-sama",examples:[
+      {jp:"ダディックさんは ひとりで べんきょうします。",rj:"Dadikku-san wa hitori de benkyoushimasu.",id:"Dadik belajar sendiri."},
+      {jp:"みんな いっしょに あそびます。",rj:"Minna issho ni asobimasu.",id:"Semua main bareng-bareng."}]}
+  ],
+  explanation:["Partikel <b>で</b> dipakai untuk tempat aktivitas berlangsung, dan juga untuk alat/cara melakukan sesuatu.","Partikel <b>と</b> dipakai untuk menyatakan \"bersama siapa\" suatu aktivitas dilakukan.","<b>ひとりで</b> = sendirian, <b>いっしょに</b> = bersama-sama."],
+  quiz:{
+    flashcard:[["restoran","レストラン",["レストラン","いえ","がっこう","こうえん"]],["teman","ともだち",["ともだち","かぞく","せんせい","がくせい"]],["keluarga","かぞく",["かぞく","ともだち","せんせい","だれ"]],["sumpit","はし",["はし","フォーク","スプーン","ナイフ"]],["bus","バス",["バス","でんしゃ","くるま","じてんしゃ"]],["sepeda","じてんしゃ",["じてんしゃ","くるま","バス","でんしゃ"]],["sendirian","ひとりで",["ひとりで","いっしょに","まいにち","あるいて"]],["setiap hari","まいにち",["まいにち","ひとりで","いっしょに","あるいて"]]],
+    dropdown:[
+      {before:"レストラン",options:["で","を","へ"],answer:"で",after:"ごはんを たべます。",tr:"Makan nasi di restoran."},
+      {before:"バス",options:["で","と","を"],answer:"で",after:"がっこうへ いきます。",tr:"Pergi ke sekolah naik bus."},
+      {before:"ともだち",options:["と","で","へ"],answer:"と",after:"えいがを みます。",tr:"Nonton film bareng teman."},
+      {before:"みんな",options:["いっしょに","ひとりで","まいにち"],answer:"いっしょに",after:"あそびます。",tr:"Semua main bareng-bareng."}
+    ],
+    build:[
+      {prompt:"Susun: \"Makan pakai sumpit.\"",tiles:["はし","で","たべます"],answer:["はし","で","たべます"],tr:"Hashi de tabemasu."},
+      {prompt:"Susun: \"Makan bareng keluarga.\"",tiles:["かぞく","と","ごはん","を","たべます"],answer:["かぞく","と","ごはん","を","たべます"],tr:"Kazoku to gohan o tabemasu."},
+      {prompt:"Susun: \"Dadik belajar sendiri.\"",tiles:["ダディックさん","は","ひとりで","べんきょうします"],answer:["ダディックさん","は","ひとりで","べんきょうします"],tr:"Dadikku-san wa hitori de benkyoushimasu."}
+    ]
+  }
+},
+{
+  id:8, title:"Kata Sifat い",
+  focus:"Kata sifat berakhiran い, bentuk negatif くないです, dan とても/あまり",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 9"],
+  vocabCore:[["おおきい","ookii","besar"],["ちいさい","chiisai","kecil"],["たかい","takai","mahal/tinggi"],["やすい","yasui","murah"],["あたらしい","atarashii","baru"],["ふるい","furui","lama/tua (benda)"],["いい","ii","bagus"],["わるい","warui","buruk"],["あつい","atsui","panas"],["さむい","samui","dingin"]],
+  vocabTheme:[["むずかしい","muzukashii","sulit"],["やさしい","yasashii","mudah/baik hati"],["おもしろい","omoshiroi","menarik"],["つまらない","tsumaranai","membosankan"],["おいしい","oishii","enak"],["ひろい","hiroi","luas"],["あかるい","akarui","terang"],["はやい","hayai","cepat"],["おそい","osoi","lambat"],["ながい","nagai","panjang"]],
+  patterns:[
+    {jp:"〜は〜いです",mean:"→ ~ itu [sifat]",examples:[
+      {jp:"この ほんは おもしろいです。",rj:"Kono hon wa omoshiroi desu.",id:"Buku ini menarik."},
+      {jp:"その かばんは たかいです。",rj:"Sono kaban wa takai desu.",id:"Tas itu mahal."}]},
+    {jp:"〜くないです",mean:"→ Bentuk negatif kata sifat い",examples:[
+      {jp:"この りょうりは おいしくないです。",rj:"Kono ryouri wa oishikunai desu.",id:"Masakan ini tidak enak."},
+      {jp:"その しごとは むずかしくないです。",rj:"Sono shigoto wa muzukashikunai desu.",id:"Pekerjaan itu tidak sulit."}]},
+    {jp:"とても/あまり",mean:"→ Sangat / tidak terlalu",examples:[
+      {jp:"きょうは とても あついです。",rj:"Kyou wa totemo atsui desu.",id:"Hari ini sangat panas."},
+      {jp:"この テストは あまり むずかしくないです。",rj:"Kono tesuto wa amari muzukashikunai desu.",id:"Tes ini tidak terlalu sulit."}]},
+    {jp:"〜くて〜",mean:"→ Menggabungkan dua sifat",examples:[
+      {jp:"この へやは ひろくて あかるいです。",rj:"Kono heya wa hirokute akarui desu.",id:"Kamar ini luas dan terang."},
+      {jp:"この ほんは やすくて おもしろいです。",rj:"Kono hon wa yasukute omoshiroi desu.",id:"Buku ini murah dan menarik."}]}
+  ],
+  explanation:["Kata sifat い selalu diakhiri huruf い dan bisa langsung menempel sebelum kata benda atau di akhir kalimat dengan です.","Bentuk negatif: ganti い di akhir jadi <b>くないです</b>.","<b>とても</b> = sangat, <b>あまり~ない</b> = tidak terlalu (selalu dipasangkan dengan bentuk negatif).","Untuk menggabungkan dua sifat sekaligus, ganti い terakhir kata sifat pertama jadi <b>くて</b>."],
+  quiz:{
+    flashcard:[["besar","おおきい",["おおきい","ちいさい","たかい","やすい"]],["mahal/tinggi","たかい",["たかい","やすい","おおきい","ちいさい"]],["baru","あたらしい",["あたらしい","ふるい","いい","わるい"]],["panas","あつい",["あつい","さむい","はやい","おそい"]],["sulit","むずかしい",["むずかしい","やさしい","おもしろい","つまらない"]],["menarik","おもしろい",["おもしろい","つまらない","むずかしい","やさしい"]],["enak","おいしい",["おいしい","つまらない","ふるい","わるい"]],["luas","ひろい",["ひろい","ちいさい","ながい","はやい"]]],
+    dropdown:[
+      {before:"このほんは",options:["おもしろいです","おもしろくないです","おもしろい"],answer:"おもしろいです",after:"。",tr:"Buku ini menarik."},
+      {before:"このりょうりは",options:["おいしくないです","おいしいです","おいしくて"],answer:"おいしくないです",after:"。",tr:"Masakan ini tidak enak."},
+      {before:"きょうは",options:["とても","あまり","だれ"],answer:"とても",after:"あついです。",tr:"Hari ini sangat panas."},
+      {before:"このへやは ひろく",options:["て","くて","で"],answer:"て",after:"あかるいです。",tr:"Kamar ini luas dan terang."}
+    ],
+    build:[
+      {prompt:"Susun: \"Tas itu mahal.\"",tiles:["その","かばん","は","たかい","です"],answer:["その","かばん","は","たかい","です"],tr:"Sono kaban wa takai desu."},
+      {prompt:"Susun: \"Pekerjaan itu tidak sulit.\"",tiles:["その","しごと","は","むずかしくない","です"],answer:["その","しごと","は","むずかしくない","です"],tr:"Sono shigoto wa muzukashikunai desu."},
+      {prompt:"Susun: \"Buku ini murah dan menarik.\"",tiles:["この","ほん","は","やすくて","おもしろいです"],answer:["この","ほん","は","やすくて","おもしろいです"],tr:"Kono hon wa yasukute omoshiroi desu."}
+    ]
+  }
+},
+{
+  id:9, title:"Kata Sifat な",
+  focus:"Kata sifat な, bentuk negatif, dan modifikasi kata benda",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 10"],
+  vocabCore:[["きれい","kirei","indah/bersih"],["しずか","shizuka","tenang"],["にぎやか","nigiyaka","ramai"],["げんき","genki","sehat/ceria"],["ひま","hima","senggang"],["べんり","benri","praktis"],["ふべん","fuben","tidak praktis"],["しんせつ","shinsetsu","baik hati"],["ゆうめい","yuumei","terkenal"],["たいへん","taihen","berat/susah"]],
+  vocabTheme:[["あんぜん","anzen","aman"],["きけん","kiken","berbahaya"],["すてき","suteki","keren/menawan"],["らく","raku","santai/mudah"],["かんたん","kantan","gampang"],["ふくざつ","fukuzatsu","rumit"],["だいじょうぶ","daijoubu","tidak apa-apa"],["まち","machi","kota"],["こども","kodomo","anak-anak"],["いろいろ","iroiro","bermacam-macam"]],
+  patterns:[
+    {jp:"〜は〜です",mean:"→ Kata sifat な dipakai seperti kata benda",examples:[
+      {jp:"この まちは きれいです。",rj:"Kono machi wa kirei desu.",id:"Kota ini indah."},
+      {jp:"としょかんは しずかです。",rj:"Toshokan wa shizuka desu.",id:"Perpustakaan tenang."}]},
+    {jp:"〜じゃないです",mean:"→ Bentuk negatif kata sifat な",examples:[
+      {jp:"この まちは にぎやかじゃないです。",rj:"Kono machi wa nigiyaka janai desu.",id:"Kota ini tidak ramai."},
+      {jp:"きょうは ひまじゃないです。",rj:"Kyou wa hima janai desu.",id:"Hari ini tidak senggang."}]},
+    {jp:"〜な + Noun",mean:"→ Memodifikasi kata benda",examples:[
+      {jp:"きれいな まちです。",rj:"Kirei na machi desu.",id:"Kota yang indah."},
+      {jp:"げんきな こどもです。",rj:"Genki na kodomo desu.",id:"Anak yang sehat/ceria."}]},
+    {jp:"とても/あまり",mean:"→ Sama seperti kata sifat い",examples:[
+      {jp:"この まちは とても べんりです。",rj:"Kono machi wa totemo benri desu.",id:"Kota ini sangat praktis."},
+      {jp:"この しごとは あまり たいへんじゃないです。",rj:"Kono shigoto wa amari taihen janai desu.",id:"Pekerjaan ini tidak terlalu berat."}]}
+  ],
+  explanation:["Kata sifat な tidak selalu diakhiri い, dan butuh partikel <b>な</b> saat langsung menempel di depan kata benda.","Bentuk negatif sama seperti kata benda+です: ganti です jadi <b>じゃないです</b>.","Sebelum kata benda: [sifat]な[benda] — misal きれいな まち (kota yang indah)."],
+  quiz:{
+    flashcard:[["indah/bersih","きれい",["きれい","しずか","にぎやか","げんき"]],["tenang","しずか",["しずか","にぎやか","ひま","べんり"]],["ramai","にぎやか",["にぎやか","しずか","きれい","たいへん"]],["sehat/ceria","げんき",["げんき","ひま","しんせつ","ゆうめい"]],["praktis","べんり",["べんり","ふべん","かんたん","ふくざつ"]],["terkenal","ゆうめい",["ゆうめい","しんせつ","すてき","あんぜん"]],["berbahaya","きけん",["きけん","あんぜん","らく","だいじょうぶ"]],["gampang","かんたん",["かんたん","ふくざつ","たいへん","にぎやか"]]],
+    dropdown:[
+      {before:"このまちは",options:["きれいです","きれいじゃないです","きれいな"],answer:"きれいです",after:"。",tr:"Kota ini indah."},
+      {before:"きょうは",options:["ひまじゃないです","ひまです","ひまな"],answer:"ひまじゃないです",after:"。",tr:"Hari ini tidak senggang."},
+      {before:"げんき",options:["な","の","い"],answer:"な",after:"こどもです。",tr:"Anak yang sehat/ceria."},
+      {before:"このしごとは あまり たいへん",options:["じゃないです","です","な"],answer:"じゃないです",after:"。",tr:"Pekerjaan ini tidak terlalu berat."}
+    ],
+    build:[
+      {prompt:"Susun: \"Perpustakaan tenang.\"",tiles:["としょかん","は","しずか","です"],answer:["としょかん","は","しずか","です"],tr:"Toshokan wa shizuka desu."},
+      {prompt:"Susun: \"Kota yang indah.\"",tiles:["きれい","な","まち","です"],answer:["きれい","な","まち","です"],tr:"Kirei na machi desu."},
+      {prompt:"Susun: \"Kota ini sangat praktis.\"",tiles:["この","まち","は","とても","べんりです"],answer:["この","まち","は","とても","べんりです"],tr:"Kono machi wa totemo benri desu."}
+    ]
+  }
+},
+{
+  id:10, title:"Suka, Benci, dan Kemahiran",
+  focus:"すきです/きらいです/じょうずです dan partikel が",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 11"],
+  vocabCore:[["すきです","suki desu","suka"],["きらいです","kirai desu","tidak suka/benci"],["じょうずです","jouzu desu","mahir"],["へたです","heta desu","kurang mahir"],["おんがく","ongaku","musik"],["スポーツ","supootsu","olahraga"],["りょうり","ryouri","masakan"],["えいご","eigo","bahasa Inggris"],["にほんご","nihongo","bahasa Jepang"],["うた","uta","lagu/nyanyian"]],
+  vocabTheme:[["サッカー","sakkaa","sepak bola"],["やきゅう","yakyuu","baseball"],["テニス","tenisu","tenis"],["すいえい","suiei","berenang"],["ダンス","dansu","menari"],["え","e","gambar"],["しゃしん","shashin","foto"],["ゲーム","geemu","permainan/game"],["マンガ","manga","komik"],["たのしい","tanoshii","menyenangkan"]],
+  patterns:[
+    {jp:"〜が すきです/きらいです",mean:"→ Suka/tidak suka ~",examples:[
+      {jp:"ダディックさんは おんがくが すきです。",rj:"Dadikku-san wa ongaku ga suki desu.",id:"Dadik suka musik."},
+      {jp:"ヌールさんは スポーツが きらいです。",rj:"Nuuru-san wa supootsu ga kirai desu.",id:"Nur tidak suka olahraga."}]},
+    {jp:"〜が じょうずです/へたです",mean:"→ Mahir/kurang mahir ~",examples:[
+      {jp:"アッザムさんは えいごが じょうずです。",rj:"Azzamu-san wa eigo ga jouzu desu.",id:"Azzam pintar bahasa Inggris."},
+      {jp:"キンザさんは りょうりが へたです。",rj:"Kinza-san wa ryouri ga heta desu.",id:"Kinza kurang pintar masak."}]},
+    {jp:"なにが すきですか",mean:"→ Menanyakan kesukaan",examples:[
+      {jp:"なにが すきですか。",rj:"Nani ga suki desu ka.",id:"Suka apa?",sub:"…おんがくが すきです。 (Suka musik.)"},
+      {jp:"なにが じょうずですか。",rj:"Nani ga jouzu desu ka.",id:"Pintar apa?",sub:"…にほんごが じょうずです。 (Pintar bahasa Jepang.)"}]},
+    {jp:"とても/あまり + すき",mean:"→ Sangat suka / tidak terlalu suka",examples:[
+      {jp:"ゼハンさんは サッカーが とても すきです。",rj:"Zehan-san wa sakkaa ga totemo suki desu.",id:"Zehan sangat suka sepak bola."},
+      {jp:"わたしは うたが あまり すきじゃないです。",rj:"Watashi wa uta ga amari suki janai desu.",id:"Saya tidak terlalu suka nyanyi."}]}
+  ],
+  explanation:["Partikel <b>が</b> dipakai (bukan を) untuk menandai objek dari kata sifat perasaan/kemampuan seperti すき, きらい, じょうず, へた.","<b>じょうず</b> = mahir/pintar, biasanya dipakai untuk orang lain — agak kurang sopan dipakai untuk diri sendiri."],
+  quiz:{
+    flashcard:[["suka","すきです",["すきです","きらいです","じょうずです","へたです"]],["tidak suka","きらいです",["きらいです","すきです","へたです","じょうずです"]],["mahir","じょうずです",["じょうずです","へたです","すきです","きらいです"]],["musik","おんがく",["おんがく","スポーツ","りょうり","うた"]],["olahraga","スポーツ",["スポーツ","おんがく","えいご","にほんご"]],["masakan","りょうり",["りょうり","おんがく","スポーツ","うた"]],["sepak bola","サッカー",["サッカー","やきゅう","テニス","すいえい"]],["berenang","すいえい",["すいえい","ダンス","サッカー","テニス"]]],
+    dropdown:[
+      {before:"ダディックさんは おんがく",options:["が","を","は"],answer:"が",after:"すきです。",tr:"Dadik suka musik."},
+      {before:"アッザムさんは えいご",options:["が","を","に"],answer:"が",after:"じょうずです。",tr:"Azzam pintar bahasa Inggris."},
+      {before:"",options:["なにが","だれが","どこが"],answer:"なにが",after:"すきですか。",tr:"Suka apa?"},
+      {before:"わたしは うたが あまり",options:["すきじゃないです","すきです","じょうずです"],answer:"すきじゃないです",after:"。",tr:"Saya tidak terlalu suka nyanyi."}
+    ],
+    build:[
+      {prompt:"Susun: \"Nur tidak suka olahraga.\"",tiles:["ヌールさん","は","スポーツ","が","きらいです"],answer:["ヌールさん","は","スポーツ","が","きらいです"],tr:"Nuuru-san wa supootsu ga kirai desu."},
+      {prompt:"Susun: \"Kinza kurang pintar masak.\"",tiles:["キンザさん","は","りょうり","が","へたです"],answer:["キンザさん","は","りょうり","が","へたです"],tr:"Kinza-san wa ryouri ga heta desu."},
+      {prompt:"Susun: \"Pintar apa?\"",tiles:["なに","が","じょうず","ですか"],answer:["なに","が","じょうず","ですか"],tr:"Nani ga jouzu desu ka."}
+    ]
+  }
+},
+{
+  id:11, title:"Mengerti dan Bisa",
+  focus:"わかります/できます dan partikel が, bentuk negatif ~ません",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 12"],
+  vocabCore:[["わかります","wakarimasu","mengerti"],["できます","dekimasu","bisa"],["かんじ","kanji","kanji"],["ひらがな","hiragana","hiragana"],["かたかな","katakana","katakana"],["うんてん","unten","menyetir"],["しごと","shigoto","pekerjaan"],["にほんご","nihongo","bahasa Jepang"],["えいご","eigo","bahasa Inggris"],["すこし","sukoshi","sedikit"]],
+  vocabTheme:[["ピアノ","piano","piano"],["ギター","gitaa","gitar"],["コンピューター","konpyuutaa","komputer"],["プログラミング","puroguramingu","pemrograman"],["けいさん","keisan","hitungan"],["うた","uta","lagu"],["え","e","gambar"],["スポーツ","supootsu","olahraga"],["ぜんぜん","zenzen","sama sekali (+negatif)"],["よく","yoku","dengan baik/sering"]],
+  patterns:[
+    {jp:"〜が わかります",mean:"→ Mengerti ~",examples:[
+      {jp:"ダディックさんは にほんごが わかります。",rj:"Dadikku-san wa nihongo ga wakarimasu.",id:"Dadik mengerti bahasa Jepang."},
+      {jp:"ヌールさんは かんじが わかりません。",rj:"Nuuru-san wa kanji ga wakarimasen.",id:"Nur tidak mengerti kanji."}]},
+    {jp:"〜が できます",mean:"→ Bisa melakukan ~",examples:[
+      {jp:"アッザムさんは うんてんが できます。",rj:"Azzamu-san wa unten ga dekimasu.",id:"Azzam bisa menyetir."},
+      {jp:"キンザさんは ピアノが できます。",rj:"Kinza-san wa piano ga dekimasu.",id:"Kinza bisa main piano."}]},
+    {jp:"なにが できますか",mean:"→ Menanyakan kemampuan",examples:[
+      {jp:"なにが できますか。",rj:"Nani ga dekimasu ka.",id:"Bisa apa?",sub:"…プログラミングが できます。 (Bisa programming.)"},
+      {jp:"なにが わかりますか。",rj:"Nani ga wakarimasu ka.",id:"Mengerti apa?",sub:"…えいごが わかります。 (Mengerti bahasa Inggris.)"}]},
+    {jp:"bentuk negatif できません/わかりません",mean:"→ Tidak bisa / tidak mengerti",examples:[
+      {jp:"ゼハンさんは うんてんが できません。",rj:"Zehan-san wa unten ga dekimasen.",id:"Zehan tidak bisa menyetir."},
+      {jp:"わたしは かんじが わかりません。",rj:"Watashi wa kanji ga wakarimasen.",id:"Saya tidak mengerti kanji."}]}
+  ],
+  explanation:["Sama seperti すき/きらい, kata kerja <b>わかります</b> (mengerti) dan <b>できます</b> (bisa) juga pakai partikel が, bukan を.","Bentuk negatif kata kerja -masu: ganti ~ます jadi <b>~ません</b>."],
+  quiz:{
+    flashcard:[["mengerti","わかります",["わかります","できます","たべます","のみます"]],["bisa","できます",["できます","わかります","いきます","きます"]],["kanji","かんじ",["かんじ","ひらがな","かたかな","えいご"]],["menyetir","うんてん",["うんてん","りょうり","しごと","すいえい"]],["pekerjaan","しごと",["しごと","がっこう","かいしゃ","うんてん"]],["piano","ピアノ",["ピアノ","ギター","うた","え"]],["gitar","ギター",["ギター","ピアノ","ダンス","スポーツ"]],["pemrograman","プログラミング",["プログラミング","コンピューター","けいさん","ゲーム"]]],
+    dropdown:[
+      {before:"ダディックさんは にほんご",options:["が","を","は"],answer:"が",after:"わかります。",tr:"Dadik mengerti bahasa Jepang."},
+      {before:"アッザムさんは うんてん",options:["が","を","に"],answer:"が",after:"できます。",tr:"Azzam bisa menyetir."},
+      {before:"ヌールさんは かんじが",options:["わかりません","わかります","できません"],answer:"わかりません",after:"。",tr:"Nur tidak mengerti kanji."},
+      {before:"",options:["なにが","だれが","いつが"],answer:"なにが",after:"できますか。",tr:"Bisa apa?"}
+    ],
+    build:[
+      {prompt:"Susun: \"Kinza bisa main piano.\"",tiles:["キンザさん","は","ピアノ","が","できます"],answer:["キンザさん","は","ピアノ","が","できます"],tr:"Kinza-san wa piano ga dekimasu."},
+      {prompt:"Susun: \"Saya tidak mengerti kanji.\"",tiles:["わたし","は","かんじ","が","わかりません"],answer:["わたし","は","かんじ","が","わかりません"],tr:"Watashi wa kanji ga wakarimasen."},
+      {prompt:"Susun: \"Zehan tidak bisa menyetir.\"",tiles:["ゼハンさん","は","うんてん","が","できません"],answer:["ゼハンさん","は","うんてん","が","できません"],tr:"Zehan-san wa unten ga dekimasen."}
+    ]
+  }
+},
+{
+  id:12, title:"Keberadaan Benda dan Makhluk Hidup",
+  focus:"あります/います, partikel に untuk lokasi",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 13"],
+  vocabCore:[["あります","arimasu","ada (benda mati)"],["います","imasu","ada (makhluk hidup)"],["うえ","ue","atas"],["した","shita","bawah"],["なか","naka","dalam"],["テーブル","teeburu","meja"],["いす","isu","kursi"],["ねこ","neko","kucing"],["いぬ","inu","anjing"],["ひと","hito","orang"]],
+  vocabTheme:[["きょうしつ","kyoushitsu","ruang kelas"],["にわ","niwa","halaman"],["へや","heya","kamar"],["とり","tori","burung"],["さかな","sakana","ikan"],["うし","ushi","sapi"],["はな","hana","bunga"],["き","ki","pohon"],["くるま","kuruma","mobil"],["こども","kodomo","anak-anak"]],
+  patterns:[
+    {jp:"〜に〜が あります",mean:"→ Di ~ ada [benda mati]",examples:[
+      {jp:"つくえの うえに ほんが あります。",rj:"Tsukue no ue ni hon ga arimasu.",id:"Di atas meja ada buku."},
+      {jp:"へやに なにが ありますか。",rj:"Heya ni nani ga arimasu ka.",id:"Di kamar ada apa?",sub:"…テーブルが あります。 (Ada meja.)"}]},
+    {jp:"〜に〜が います",mean:"→ Di ~ ada [makhluk hidup]",examples:[
+      {jp:"にわに ねこが います。",rj:"Niwa ni neko ga imasu.",id:"Di halaman ada kucing."},
+      {jp:"きょうしつに こどもが います。",rj:"Kyoushitsu ni kodomo ga imasu.",id:"Di ruang kelas ada anak-anak."}]},
+    {jp:"だれが いますか/なにが ありますか",mean:"→ Menanyakan isi suatu tempat",examples:[
+      {jp:"きょうしつに だれが いますか。",rj:"Kyoushitsu ni dare ga imasu ka.",id:"Di ruang kelas ada siapa?",sub:"…せんせいが います。 (Ada guru.)"},
+      {jp:"つくえに なにが ありますか。",rj:"Tsukue ni nani ga arimasu ka.",id:"Di meja ada apa?",sub:"…ほんが あります。 (Ada buku.)"}]},
+    {jp:"bentuk negatif ありません/いません",mean:"→ Tidak ada",examples:[
+      {jp:"へやに ねこは いません。",rj:"Heya ni neko wa imasen.",id:"Di kamar tidak ada kucing."},
+      {jp:"つくえに ほんは ありません。",rj:"Tsukue ni hon wa arimasen.",id:"Di meja tidak ada buku."}]}
+  ],
+  explanation:["<b>あります</b> dipakai untuk benda mati/tak bernyawa, <b>います</b> untuk makhluk hidup (orang & hewan).","Pola dasar: [tempat]に[benda/orang]が あります/います.","Bentuk negatif: <b>ありません</b> (benda), <b>いません</b> (makhluk hidup)."],
+  quiz:{
+    flashcard:[["ada (benda)","あります",["あります","います","たべます","みます"]],["ada (makhluk hidup)","います",["います","あります","いきます","きます"]],["atas","うえ",["うえ","した","なか","そと"]],["kucing","ねこ",["ねこ","いぬ","とり","うし"]],["anjing","いぬ",["いぬ","ねこ","うし","とり"]],["ruang kelas","きょうしつ",["きょうしつ","にわ","へや","がっこう"]],["halaman","にわ",["にわ","へや","きょうしつ","こうえん"]],["bunga","はな",["はな","き","くさ","にわ"]]],
+    dropdown:[
+      {before:"つくえのうえに ほんが",options:["あります","います","です"],answer:"あります",after:"。",tr:"Di atas meja ada buku."},
+      {before:"にわに ねこが",options:["います","あります","です"],answer:"います",after:"。",tr:"Di halaman ada kucing."},
+      {before:"きょうしつに",options:["だれが","なにが","どこが"],answer:"だれが",after:"いますか。",tr:"Di ruang kelas ada siapa?"},
+      {before:"へやに ねこは",options:["いません","ありません","いないです"],answer:"いません",after:"。",tr:"Di kamar tidak ada kucing."}
+    ],
+    build:[
+      {prompt:"Susun: \"Di kamar ada apa?\"",tiles:["へや","に","なに","が","ありますか"],answer:["へや","に","なに","が","ありますか"],tr:"Heya ni nani ga arimasu ka."},
+      {prompt:"Susun: \"Di ruang kelas ada anak-anak.\"",tiles:["きょうしつ","に","こども","が","います"],answer:["きょうしつ","に","こども","が","います"],tr:"Kyoushitsu ni kodomo ga imasu."},
+      {prompt:"Susun: \"Di meja tidak ada buku.\"",tiles:["つくえ","に","ほん","は","ありません"],answer:["つくえ","に","ほん","は","ありません"],tr:"Tsukue ni hon wa arimasen."}
+    ]
+  }
+},
+{
+  id:13, title:"Menghitung Benda dan Orang",
+  focus:"Kata bantu bilangan つ/まい/にん/ほん/さつ",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 14"],
+  vocabCore:[["ひとつ","hitotsu","1 buah"],["ふたつ","futatsu","2 buah"],["みっつ","mittsu","3 buah"],["よっつ","yottsu","4 buah"],["いつつ","itsutsu","5 buah"],["いちまい","ichimai","1 lembar"],["にまい","nimai","2 lembar"],["ひとり","hitori","1 orang"],["ふたり","futari","2 orang"],["さんにん","sannin","3 orang"]],
+  vocabTheme:[["いっぽん","ippon","1 batang"],["にほん","nihon","2 batang"],["いっさつ","issatsu","1 buku"],["にさつ","nisatsu","2 buku"],["かみ","kami","kertas"],["りんご","ringo","apel"],["コップ","koppu","gelas"],["いくつ","ikutsu","berapa (umum)"],["なんにん","nannin","berapa orang"],["なんまい","nanmai","berapa lembar"]],
+  patterns:[
+    {jp:"counting benda umum (つ)",mean:"→ Menghitung benda bulat/umum",examples:[
+      {jp:"りんごを みっつ かいます。",rj:"Ringo o mittsu kaimasu.",id:"Beli apel 3 buah."},
+      {jp:"テーブルに コップが ふたつ あります。",rj:"Teeburu ni koppu ga futatsu arimasu.",id:"Di meja ada 2 gelas."}]},
+    {jp:"counting orang (にん/ひとり/ふたり)",mean:"→ Menghitung orang",examples:[
+      {jp:"きょうしつに がくせいが さんにん います。",rj:"Kyoushitsu ni gakusei ga sannin imasu.",id:"Di ruang kelas ada 3 murid."},
+      {jp:"ともだちが ふたり きます。",rj:"Tomodachi ga futari kimasu.",id:"2 teman akan datang."}]},
+    {jp:"counting benda panjang (ほん) & buku (さつ)",mean:"→ Pensil, buku, dan sejenisnya",examples:[
+      {jp:"えんぴつが にほん あります。",rj:"Enpitsu ga nihon arimasu.",id:"Ada 2 pensil."},
+      {jp:"ほんを さんさつ かいました。",rj:"Hon o sansatsu kaimashita.",id:"Beli 3 buku. (bentuk lampau, dipelajari lebih detail di Bab 14)"}]},
+    {jp:"いくつ/なんにん",mean:"→ Menanyakan jumlah",examples:[
+      {jp:"りんごは いくつ ありますか。",rj:"Ringo wa ikutsu arimasu ka.",id:"Apel ada berapa?",sub:"…いつつ あります。 (Ada 5.)"},
+      {jp:"がくせいは なんにん いますか。",rj:"Gakusei wa nannin imasu ka.",id:"Murid ada berapa orang?",sub:"…じゅうにん います。 (Ada 10 orang.)"}]}
+  ],
+  explanation:["Bahasa Jepang punya kata bantu bilangan berbeda tergantung jenis benda: <b>つ</b> untuk benda umum/bulat, <b>にん</b> untuk orang (1 & 2 orang punya bentuk khusus: ひとり/ふたり), <b>ほん</b> untuk benda panjang, <b>さつ</b> untuk buku.","Pola tanya jumlah: <b>いくつ</b> (berapa, umum), <b>なんにん</b> (berapa orang) — pakai なん+kata bantu bilangan."],
+  quiz:{
+    flashcard:[["1 buah","ひとつ",["ひとつ","ふたつ","みっつ","よっつ"]],["3 buah","みっつ",["みっつ","よっつ","いつつ","ひとつ"]],["1 orang","ひとり",["ひとり","ふたり","さんにん","にまい"]],["2 orang","ふたり",["ふたり","ひとり","さんにん","いちまい"]],["berapa (umum)","いくつ",["いくつ","なんにん","なんまい","いつ"]],["berapa orang","なんにん",["なんにん","いくつ","なんまい","いつ"]],["apel","りんご",["りんご","かみ","コップ","ほん"]],["gelas","コップ",["コップ","りんご","かみ","ほん"]]],
+    dropdown:[
+      {before:"りんごを",options:["みっつ","さんにん","さんまい"],answer:"みっつ",after:"かいます。",tr:"Beli apel 3 buah."},
+      {before:"きょうしつに がくせいが",options:["さんにん","みっつ","さんぼん"],answer:"さんにん",after:"います。",tr:"Di ruang kelas ada 3 murid."},
+      {before:"りんごは",options:["いくつ","なんにん","いつ"],answer:"いくつ",after:"ありますか。",tr:"Apel ada berapa?"},
+      {before:"がくせいは",options:["なんにん","いくつ","なんまい"],answer:"なんにん",after:"いますか。",tr:"Murid ada berapa orang?"}
+    ],
+    build:[
+      {prompt:"Susun: \"Di meja ada 2 gelas.\"",tiles:["テーブル","に","コップ","が","ふたつあります"],answer:["テーブル","に","コップ","が","ふたつあります"],tr:"Teeburu ni koppu ga futatsu arimasu."},
+      {prompt:"Susun: \"2 teman akan datang.\"",tiles:["ともだち","が","ふたり","きます"],answer:["ともだち","が","ふたり","きます"],tr:"Tomodachi ga futari kimasu."},
+      {prompt:"Susun: \"Ada 2 pensil.\"",tiles:["えんぴつ","が","にほん","あります"],answer:["えんぴつ","が","にほん","あります"],tr:"Enpitsu ga nihon arimasu."}
+    ]
+  }
+},
+{
+  id:14, title:"Bentuk Lampau ~ました",
+  focus:"Kata kerja bentuk lampau positif dan negatif",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 15"],
+  vocabCore:[["たべました","tabemashita","sudah makan"],["のみました","nomimashita","sudah minum"],["いきました","ikimashita","sudah pergi"],["きました","kimashita","sudah datang"],["かえりました","kaerimashita","sudah pulang"],["みました","mimashita","sudah lihat/nonton"],["よみました","yomimashita","sudah baca"],["かいました","kaimashita","sudah beli"],["しました","shimashita","sudah melakukan"],["べんきょうしました","benkyoushimashita","sudah belajar"]],
+  vocabTheme:[["きのう","kinou","kemarin"],["せんしゅう","senshuu","minggu lalu"],["せんげつ","sengetsu","bulan lalu"],["きょねん","kyonen","tahun lalu"],["あさごはん","asagohan","sarapan"],["ひるごはん","hirugohan","makan siang"],["ばんごはん","bangohan","makan malam"],["しゅくだい","shukudai","PR"],["テスト","tesuto","tes"],["かいぎ","kaigi","rapat"]],
+  patterns:[
+    {jp:"〜ました",mean:"→ Bentuk lampau positif",examples:[
+      {jp:"きのう ダディックさんは えいがを みました。",rj:"Kinou Dadikku-san wa eiga o mimashita.",id:"Kemarin Dadik nonton film."},
+      {jp:"せんしゅう ヌールさんは にほんへ いきました。",rj:"Senshuu Nuuru-san wa nihon e ikimashita.",id:"Minggu lalu Nur pergi ke Jepang."}]},
+    {jp:"〜ませんでした",mean:"→ Bentuk lampau negatif",examples:[
+      {jp:"きのう アッザムさんは がっこうへ いきませんでした。",rj:"Kinou Azzamu-san wa gakkou e ikimasendeshita.",id:"Kemarin Azzam tidak pergi ke sekolah."},
+      {jp:"せんげつ キンザさんは しゅくだいを しませんでした。",rj:"Sengetsu Kinza-san wa shukudai o shimasendeshita.",id:"Bulan lalu Kinza tidak mengerjakan PR."}]},
+    {jp:"いつ〜ましたか",mean:"→ Menanyakan waktu kejadian lampau",examples:[
+      {jp:"いつ にほんへ いきましたか。",rj:"Itsu nihon e ikimashita ka.",id:"Kapan pergi ke Jepang?",sub:"…きょねん いきました。 (Tahun lalu.)"},
+      {jp:"いつ べんきょうしましたか。",rj:"Itsu benkyoushimashita ka.",id:"Kapan belajar?",sub:"…きのう べんきょうしました。 (Kemarin belajar.)"}]},
+    {jp:"kata keterangan waktu lampau",mean:"→ Latihan kalimat harian",examples:[
+      {jp:"きのう しゅくだいを しました。",rj:"Kinou shukudai o shimashita.",id:"Kemarin mengerjakan PR."},
+      {jp:"せんしゅう テストが ありました。",rj:"Senshuu tesuto ga arimashita.",id:"Minggu lalu ada tes."}]}
+  ],
+  explanation:["Bentuk lampau kata kerja -masu: ganti ~ます jadi <b>~ました</b> (positif) atau <b>~ませんでした</b> (negatif).","Kata keterangan waktu lampau umum: <b>きのう</b> (kemarin), <b>せんしゅう</b> (minggu lalu), <b>せんげつ</b> (bulan lalu), <b>きょねん</b> (tahun lalu)."],
+  quiz:{
+    flashcard:[["sudah makan","たべました",["たべました","のみました","いきました","きました"]],["sudah pergi","いきました",["いきました","きました","かえりました","みました"]],["sudah pulang","かえりました",["かえりました","いきました","きました","よみました"]],["kemarin","きのう",["きのう","せんしゅう","せんげつ","きょねん"]],["minggu lalu","せんしゅう",["せんしゅう","せんげつ","きょねん","きのう"]],["tahun lalu","きょねん",["きょねん","せんげつ","せんしゅう","きのう"]],["PR","しゅくだい",["しゅくだい","テスト","かいぎ","しごと"]],["tes","テスト",["テスト","しゅくだい","かいぎ","がっこう"]]],
+    dropdown:[
+      {before:"きのう ダディックさんは えいがを",options:["みました","みます","みません"],answer:"みました",after:"。",tr:"Kemarin Dadik nonton film."},
+      {before:"きのう アッザムさんは がっこうへ",options:["いきませんでした","いきました","いきます"],answer:"いきませんでした",after:"。",tr:"Kemarin Azzam tidak pergi ke sekolah."},
+      {before:"",options:["いつ","どこ","だれ"],answer:"いつ",after:"にほんへ いきましたか。",tr:"Kapan pergi ke Jepang?"},
+      {before:"せんげつ キンザさんは しゅくだいを",options:["しませんでした","しました","します"],answer:"しませんでした",after:"。",tr:"Bulan lalu Kinza tidak mengerjakan PR."}
+    ],
+    build:[
+      {prompt:"Susun: \"Minggu lalu Nur pergi ke Jepang.\"",tiles:["せんしゅう","ヌールさん","は","にほんへ","いきました"],answer:["せんしゅう","ヌールさん","は","にほんへ","いきました"],tr:"Senshuu Nuuru-san wa nihon e ikimashita."},
+      {prompt:"Susun: \"Kapan belajar?\"",tiles:["いつ","べんきょうしました","か"],answer:["いつ","べんきょうしました","か"],tr:"Itsu benkyoushimashita ka."},
+      {prompt:"Susun: \"Minggu lalu ada tes.\"",tiles:["せんしゅう","テスト","が","ありました"],answer:["せんしゅう","テスト","が","ありました"],tr:"Senshuu tesuto ga arimashita."}
+    ]
+  }
+},
+{
+  id:15, title:"Melakukan Dua Hal Sekaligus",
+  focus:"Pola ~ながら untuk dua aktivitas bersamaan",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 16"],
+  vocabCore:[["ながら","nagara","sambil"],["あるきます","arukimasu","berjalan kaki"],["はしります","hashirimasu","berlari"],["うたいます","utaimasu","bernyanyi"],["はなします","hanashimasu","berbicara"],["ききます","kikimasu","mendengar"],["かきます","kakimasu","menulis"],["おしえます","oshiemasu","mengajar"],["ならいます","naraimasu","belajar (dari orang lain)"],["てつだいます","tetsudaimasu","membantu"]],
+  vocabTheme:[["おんがく","ongaku","musik"],["でんわ","denwa","telepon"],["メール","meeru","email"],["しゃしん","shashin","foto"],["りょうり","ryouri","masakan"],["にっき","nikki","buku harian"],["しごと","shigoto","pekerjaan"],["しゅみ","shumi","hobi"],["はたらきます","hatarakimasu","bekerja"],["いつも","itsumo","selalu"]],
+  patterns:[
+    {jp:"〜ながら〜ます",mean:"→ Melakukan A sambil B",examples:[
+      {jp:"おんがくを ききながら べんきょうします。",rj:"Ongaku o kikinagara benkyoushimasu.",id:"Belajar sambil dengar musik."},
+      {jp:"あるきながら はなします。",rj:"Arukinagara hanashimasu.",id:"Bicara sambil jalan."}]},
+    {jp:"lanjutan dengan subjek berbeda",mean:"→ Latihan tambahan",examples:[
+      {jp:"ダディックさんは うたいながら りょうりを します。",rj:"Dadikku-san wa utainagara ryouri o shimasu.",id:"Dadik masak sambil nyanyi."},
+      {jp:"ヌールさんは でんわを しながら あるきます。",rj:"Nuuru-san wa denwa o shinagara arukimasu.",id:"Nur jalan sambil telepon."}]},
+    {jp:"なにを しながら〜ますか",mean:"→ Menanyakan aktivitas ganda",examples:[
+      {jp:"なにを しながら べんきょうしますか。",rj:"Nani o shinagara benkyoushimasu ka.",id:"Belajar sambil apa?",sub:"…おんがくを ききながら べんきょうします。 (Sambil dengar musik.)"},
+      {jp:"いつも なにを しながら はたらきますか。",rj:"Itsumo nani o shinagara hatarakimasu ka.",id:"Biasanya bekerja sambil apa?",sub:"…おんがくを ききながら はたらきます。 (Sambil dengar musik.)"}]},
+    {jp:"review kalimat harian dengan ながら",mean:"→ Latihan bebas",examples:[
+      {jp:"アッザムさんは あるきながら おんがくを ききます。",rj:"Azzamu-san wa arukinagara ongaku o kikimasu.",id:"Azzam jalan sambil dengar musik."},
+      {jp:"キンザさんは てつだいながら はなします。",rj:"Kinza-san wa tetsudainagara hanashimasu.",id:"Kinza membantu sambil ngobrol."}]}
+  ],
+  explanation:["<b>ながら</b> dipakai untuk menyatakan dua aktivitas dilakukan bersamaan oleh subjek yang sama.","Kata kerja sebelum ながら memakai bentuk masu-stem (tanpa ます) — contoh きき<b>ます</b> → きき<b>ながら</b>.","Aktivitas utama (yang lebih penting/menjadi fokus kalimat) diletakkan di akhir kalimat."],
+  quiz:{
+    flashcard:[["sambil","ながら",["ながら","まえに","あとで","ことが"]],["berjalan kaki","あるきます",["あるきます","はしります","うたいます","はなします"]],["berlari","はしります",["はしります","あるきます","ききます","かきます"]],["berbicara","はなします",["はなします","ききます","うたいます","おしえます"]],["mendengar","ききます",["ききます","はなします","かきます","ならいます"]],["menulis","かきます",["かきます","ききます","おしえます","てつだいます"]],["mengajar","おしえます",["おしえます","ならいます","てつだいます","はたらきます"]],["membantu","てつだいます",["てつだいます","おしえます","ならいます","はたらきます"]]],
+    dropdown:[
+      {before:"おんがくを きき",options:["ながら","まえに","あとで"],answer:"ながら",after:"べんきょうします。",tr:"Belajar sambil dengar musik."},
+      {before:"ダディックさんは うたい",options:["ながら","ました","ません"],answer:"ながら",after:"りょうりをします。",tr:"Dadik masak sambil nyanyi."},
+      {before:"なにを し",options:["ながら","ました","ません"],answer:"ながら",after:"べんきょうしますか。",tr:"Belajar sambil apa?"},
+      {before:"あるき",options:["ながら","ました","ません"],answer:"ながら",after:"はなします。",tr:"Bicara sambil jalan."}
+    ],
+    build:[
+      {prompt:"Susun: \"Nur jalan sambil telepon.\"",tiles:["ヌールさん","は","でんわを","しながら","あるきます"],answer:["ヌールさん","は","でんわを","しながら","あるきます"],tr:"Nuuru-san wa denwa o shinagara arukimasu."},
+      {prompt:"Susun: \"Azzam jalan sambil dengar musik.\"",tiles:["アッザムさん","は","あるきながら","おんがくを","ききます"],answer:["アッザムさん","は","あるきながら","おんがくを","ききます"],tr:"Azzamu-san wa arukinagara ongaku o kikimasu."},
+      {prompt:"Susun: \"Kinza membantu sambil ngobrol.\"",tiles:["キンザさん","は","てつだいながら","はなします"],answer:["キンザさん","は","てつだいながら","はなします"],tr:"Kinza-san wa tetsudainagara hanashimasu."}
+    ]
+  }
+},
+{
+  id:16, title:"Menyambung Aktivitas (bentuk て)",
+  focus:"Bentuk て untuk merangkai beberapa kata kerja",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 17"],
+  vocabCore:[["おきます","okimasu","bangun tidur"],["ねます","nemasu","tidur"],["あらいます","araimasu","mencuci"],["きます","kimasu","memakai (baju)"],["でかけます","dekakemasu","keluar rumah"],["そうじします","soujishimasu","bersih-bersih"],["かお","kao","wajah"],["は","ha","gigi"],["ふく","fuku","baju"],["まいあさ","maiasa","setiap pagi"]],
+  vocabTheme:[["シャワーをあびます","shawaa o abimasu","mandi shower"],["はをみがきます","ha o migakimasu","sikat gigi"],["てがみ","tegami","surat"],["おふろ","ofuro","mandi berendam"],["まいばん","maiban","setiap malam"],["あさごはん","asagohan","sarapan"],["でんき","denki","listrik/lampu"],["まど","mado","jendela"],["ドア","doa","pintu"],["へや","heya","kamar"]],
+  patterns:[
+    {jp:"〜て、〜て、〜ます",mean:"→ Rangkaian aktivitas berurutan",examples:[
+      {jp:"あさ おきて、かおを あらって、あさごはんを たべます。",rj:"Asa okite, kao o aratte, asagohan o tabemasu.",id:"Bangun, cuci muka, lalu sarapan."},
+      {jp:"がっこうへ いって、べんきょうして、うちへ かえります。",rj:"Gakkou e itte, benkyoushite, uchi e kaerimasu.",id:"Pergi ke sekolah, belajar, lalu pulang."}]},
+    {jp:"lanjutan konjugasi て",mean:"→ Latihan tambahan",examples:[
+      {jp:"ほんを よんで、テレビを みます。",rj:"Hon o yonde, terebi o mimasu.",id:"Baca buku lalu nonton TV."},
+      {jp:"ふくを きて、でかけます。",rj:"Fuku o kite, dekakemasu.",id:"Pakai baju lalu keluar."}]},
+    {jp:"rutinitas pagi",mean:"→ Kalimat sehari-hari",examples:[
+      {jp:"まいあさ シャワーを あびて、はを みがきます。",rj:"Maiasa shawaa o abite, ha o migakimasu.",id:"Setiap pagi mandi lalu sikat gigi."},
+      {jp:"よる、そうじを して、ねます。",rj:"Yoru, souji o shite, nemasu.",id:"Malam, beres-beres lalu tidur."}]},
+    {jp:"rutinitas dengan nama",mean:"→ Latihan bebas",examples:[
+      {jp:"ダディックさんは おきて、はを みがいて、シャワーを あびます。",rj:"Dadikku-san wa okite, ha o migaite, shawaa o abimasu.",id:"Dadik bangun, sikat gigi, lalu mandi."},
+      {jp:"ヌールさんは べんきょうして、ねます。",rj:"Nuuru-san wa benkyoushite, nemasu.",id:"Nur belajar lalu tidur."}]}
+  ],
+  explanation:["Bentuk て dipakai untuk menyambung beberapa kata kerja dalam satu kalimat, urutannya sesuai urutan kejadian.","Setiap kelompok kata kerja (I/II/III) punya pola perubahan berbeda ke bentuk て — lihat tabel konjugasi di bawah untuk pola lengkapnya.","Kelompok I paling banyak variasinya tergantung akhiran ますnya (う/つ/る→って, ぬ/ぶ/む→んで, く→いて, ぐ→いで, す→して), sedangkan Kelompok II dan III jauh lebih sederhana."],
+  conjugationTable:{formName:"て形", groups:[
+    {label:"Kelompok I", rows:[["かきます","かいて"],["およぎます","およいで"],["はなします","はなして"],["まちます","まって"],["のみます","のんで"],["よびます","よんで"],["かえります","かえって"],["いきます","いって（istimewa）"]]},
+    {label:"Kelompok II", rows:[["たべます","たべて"],["ねます","ねて"],["おきます","おきて"],["みます","みて"]]},
+    {label:"Kelompok III", rows:[["きます","きて"],["します","して"],["さんぽします","さんぽして"]]}
+  ]},
+  quiz:{
+    flashcard:[["bangun tidur","おきます",["おきます","ねます","あらいます","でかけます"]],["tidur","ねます",["ねます","おきます","でかけます","そうじします"]],["mencuci","あらいます",["あらいます","きます","おきます","ねます"]],["keluar rumah","でかけます",["でかけます","かえります","おきます","ねます"]],["bersih-bersih","そうじします",["そうじします","あらいます","でかけます","おきます"]],["wajah","かお",["かお","は","ふく","へや"]],["gigi","は",["は","かお","ふく","まど"]],["baju","ふく",["ふく","かお","は","へや"]]],
+    dropdown:[
+      {before:"あさ おき",options:["て","ます","ました"],answer:"て",after:"かおをあらいます。",tr:"Bangun lalu cuci muka."},
+      {before:"がっこうへ いっ",options:["て","た","ます"],answer:"て",after:"べんきょうします。",tr:"Pergi ke sekolah lalu belajar."},
+      {before:"ほんを よん",options:["で","て","だ"],answer:"で",after:"テレビをみます。",tr:"Baca buku lalu nonton TV."},
+      {before:"ふくを き",options:["て","た","ます"],answer:"て",after:"でかけます。",tr:"Pakai baju lalu keluar."}
+    ],
+    build:[
+      {prompt:"Susun: \"Pakai baju lalu keluar.\"",tiles:["ふく","を","きて","でかけます"],answer:["ふく","を","きて","でかけます"],tr:"Fuku o kite, dekakemasu."},
+      {prompt:"Susun: \"Nur belajar lalu tidur.\"",tiles:["ヌールさん","は","べんきょうして","ねます"],answer:["ヌールさん","は","べんきょうして","ねます"],tr:"Nuuru-san wa benkyoushite, nemasu."},
+      {prompt:"Susun: \"Malam, beres-beres lalu tidur.\"",tiles:["よる","そうじを","して","ねます"],answer:["よる","そうじを","して","ねます"],tr:"Yoru, souji o shite, nemasu."}
+    ]
+  }
+},
+{
+  id:17, title:"Minta Tolong, Izin, dan Larangan",
+  focus:"~てください, ~てもいいです, ~てはいけません",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 18"],
+  vocabCore:[["まってください","matte kudasai","tolong tunggu"],["みてください","mite kudasai","tolong lihat"],["きいてください","kiite kudasai","tolong dengarkan"],["いってください","itte kudasai","tolong katakan"],["かいてください","kaite kudasai","tolong tulis"],["あけてください","akete kudasai","tolong buka"],["しめてください","shimete kudasai","tolong tutup"],["すわってください","suwatte kudasai","tolong duduk"],["たってください","tatte kudasai","tolong berdiri"],["でんき","denki","listrik/lampu"]],
+  vocabTheme:[["まど","mado","jendela"],["ドア","doa","pintu"],["しゃしんをとります","shashin o torimasu","memotret"],["すいます","suimasu","merokok"],["おさけ","osake","minuman keras"],["くつ","kutsu","sepatu"],["へや","heya","kamar"],["ちょっと","chotto","sebentar"],["ここで","koko de","di sini"],["きょうしつ","kyoushitsu","ruang kelas"]],
+  patterns:[
+    {jp:"〜てください",mean:"→ Tolong lakukan ~",examples:[
+      {jp:"ちょっと まってください。",rj:"Chotto matte kudasai.",id:"Tolong tunggu sebentar."},
+      {jp:"まどを あけてください。",rj:"Mado o akete kudasai.",id:"Tolong buka jendela."}]},
+    {jp:"〜てもいいです",mean:"→ Boleh melakukan ~",examples:[
+      {jp:"ここで しゃしんを とっても いいです。",rj:"Koko de shashin o tottemo ii desu.",id:"Boleh foto di sini."},
+      {jp:"この いすに すわっても いいです。",rj:"Kono isu ni suwattemo ii desu.",id:"Boleh duduk di kursi ini."}]},
+    {jp:"〜てはいけません",mean:"→ Tidak boleh melakukan ~",examples:[
+      {jp:"ここで すっては いけません。",rj:"Koko de sutte wa ikemasen.",id:"Tidak boleh merokok di sini."},
+      {jp:"きょうしつで たべては いけません。",rj:"Kyoushitsu de tabete wa ikemasen.",id:"Tidak boleh makan di ruang kelas."}]},
+    {jp:"tanya izin",mean:"→ ~てもいいですか",examples:[
+      {jp:"まどを あけても いいですか。",rj:"Mado o aketemo ii desu ka.",id:"Boleh buka jendela?",sub:"…はい、いいですよ。 (Ya, boleh.)"},
+      {jp:"ここで ねても いいですか。",rj:"Koko de netemo ii desu ka.",id:"Boleh tidur di sini?",sub:"…いいえ、いけません。 (Tidak boleh.)"}]}
+  ],
+  explanation:["<b>〜てください</b> dipakai untuk meminta tolong secara sopan.","<b>〜てもいいです</b> menyatakan izin (\"boleh melakukan ~\"), sedangkan <b>〜てはいけません</b> menyatakan larangan (\"tidak boleh melakukan ~\").","Untuk bertanya izin, tambahkan か di akhir 〜てもいいです menjadi 〜てもいいですか.","Bab ini juga sering memakai <b>bentuk ない</b> (misal 〜ないでください = tolong jangan ~) — lihat tabel konjugasi di bawah."],
+  conjugationTable:{formName:"ない形", groups:[
+    {label:"Kelompok I", rows:[["すいます","すわない"],["いきます","いかない"],["いそぎます","いそがない"],["はなします","はなさない"],["まちます","またない"],["よびます","よばない"],["のみます","のまない"],["かえります","かえらない"]]},
+    {label:"Kelompok II", rows:[["たべます","たべない"],["みます","みない"],["おきます","おきない"]]},
+    {label:"Kelompok III", rows:[["きます","こない"],["します","しない"]]}
+  ]},
+  quiz:{
+    flashcard:[["tolong tunggu","まってください",["まってください","みてください","きいてください","いってください"]],["tolong buka","あけてください",["あけてください","しめてください","すわってください","たってください"]],["tolong tutup","しめてください",["しめてください","あけてください","たってください","すわってください"]],["jendela","まど",["まど","ドア","へや","くつ"]],["pintu","ドア",["ドア","まど","へや","でんき"]],["sepatu","くつ",["くつ","ふく","まど","ドア"]],["merokok","すいます",["すいます","のみます","たべます","みます"]],["sebentar","ちょっと",["ちょっと","いつも","まいにち","ぜんぜん"]]],
+    dropdown:[
+      {before:"まどを あけて",options:["ください","もいいです","はいけません"],answer:"ください",after:"。",tr:"Tolong buka jendela."},
+      {before:"ここで しゃしんを とって",options:["もいいです","ください","はいけません"],answer:"もいいです",after:"。",tr:"Boleh foto di sini."},
+      {before:"きょうしつで たべて",options:["はいけません","もいいです","ください"],answer:"はいけません",after:"。",tr:"Tidak boleh makan di ruang kelas."},
+      {before:"まどを あけて",options:["もいいですか","ください","はいけませんか"],answer:"もいいですか",after:"。",tr:"Boleh buka jendela?"}
+    ],
+    build:[
+      {prompt:"Susun: \"Tolong tunggu sebentar.\"",tiles:["ちょっと","まって","ください"],answer:["ちょっと","まって","ください"],tr:"Chotto matte kudasai."},
+      {prompt:"Susun: \"Boleh duduk di kursi ini.\"",tiles:["この","いす","に","すわっても","いいです"],answer:["この","いす","に","すわっても","いいです"],tr:"Kono isu ni suwattemo ii desu."},
+      {prompt:"Susun: \"Tidak boleh merokok di sini.\"",tiles:["ここで","すって","は","いけません"],answer:["ここで","すって","は","いけません"],tr:"Koko de sutte wa ikemasen."}
+    ]
+  }
+},
+{
+  id:18, title:"Sedang Berlangsung dan Kebiasaan",
+  focus:"Pola ~ています untuk aktivitas, pekerjaan, dan kondisi",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 19"],
+  vocabCore:[["たべています","tabeteimasu","sedang makan"],["よんでいます","yondeimasu","sedang baca"],["みています","miteimasu","sedang nonton"],["はたらいています","hataraiteimasu","bekerja (di)"],["すんでいます","sundeimasu","tinggal (di)"],["しっています","shitteimasu","kenal/tahu"],["けっこんしています","kekkonshiteimasu","sudah menikah"],["もっています","motteimasu","punya"],["いま","ima","sekarang"],["まだ","mada","belum"]],
+  vocabTheme:[["もう","mou","sudah"],["だいがくせい","daigakusei","mahasiswa"],["こうこうせい","koukousei","siswa SMA"],["しょうがくせい","shougakusei","siswa SD"],["アパート","apaato","apartemen"],["マンション","manshon","apartemen mewah"],["かぞく","kazoku","keluarga"],["ジャカルタ","Jakaruta","Jakarta"],["くるま","kuruma","mobil"],["しゅくだい","shukudai","PR"]],
+  patterns:[
+    {jp:"〜ています (sedang berlangsung)",mean:"→ Sedang melakukan ~",examples:[
+      {jp:"いま ごはんを たべています。",rj:"Ima gohan o tabeteimasu.",id:"Sekarang sedang makan."},
+      {jp:"ヌールさんは ほんを よんでいます。",rj:"Nuuru-san wa hon o yondeimasu.",id:"Nur sedang baca buku."}]},
+    {jp:"〜ています (kebiasaan/pekerjaan)",mean:"→ Bekerja/tinggal di ~",examples:[
+      {jp:"アッザムさんは かいしゃで はたらいています。",rj:"Azzamu-san wa kaisha de hataraiteimasu.",id:"Azzam bekerja di kantor itu."},
+      {jp:"キンザさんは ジャカルタに すんでいます。",rj:"Kinza-san wa Jakaruta ni sundeimasu.",id:"Kinza tinggal di Jakarta."}]},
+    {jp:"〜を しっています/もっています",mean:"→ Kenal / punya",examples:[
+      {jp:"ダディックさんは ヌールさんを しっています。",rj:"Dadikku-san wa Nuuru-san o shitteimasu.",id:"Dadik kenal Nur."},
+      {jp:"ゼハンさんは くるまを もっています。",rj:"Zehan-san wa kuruma o motteimasu.",id:"Zehan punya mobil."}]},
+    {jp:"いま/まだ/もう",mean:"→ Sekarang / belum / sudah",examples:[
+      {jp:"いま なにを していますか。",rj:"Ima nani o shiteimasu ka.",id:"Sekarang lagi apa?",sub:"…しゅくだいを しています。 (Lagi ngerjain PR.)"},
+      {jp:"もう ごはんを たべましたか。",rj:"Mou gohan o tabemashita ka.",id:"Sudah makan?",sub:"…いいえ、まだです。 (Belum.)"}]}
+  ],
+  explanation:["<b>〜ています</b> punya beberapa makna tergantung konteks: sedang berlangsung (\"sedang melakukan\"), kebiasaan/pekerjaan tetap, atau kondisi hasil (tahu/punya/menikah/tinggal) yang di bahasa Indonesia tidak selalu diterjemahkan \"sedang\".","<b>もう</b> = sudah, <b>まだ</b> = belum, dipakai untuk tanya-jawab status selesai tidaknya sesuatu."],
+  quiz:{
+    flashcard:[["sedang makan","たべています",["たべています","よんでいます","みています","はたらいています"]],["sedang baca","よんでいます",["よんでいます","たべています","みています","すんでいます"]],["bekerja (di)","はたらいています",["はたらいています","すんでいます","もっています","しっています"]],["tinggal (di)","すんでいます",["すんでいます","はたらいています","もっています","しっています"]],["kenal/tahu","しっています",["しっています","もっています","すんでいます","はたらいています"]],["punya","もっています",["もっています","しっています","すんでいます","はたらいています"]],["sekarang","いま",["いま","まだ","もう","いつも"]],["sudah","もう",["もう","まだ","いま","まいにち"]]],
+    dropdown:[
+      {before:"いま ごはんを たべて",options:["います","ました","ません"],answer:"います",after:"。",tr:"Sekarang sedang makan."},
+      {before:"アッザムさんは かいしゃで はたらいて",options:["います","ました","ください"],answer:"います",after:"。",tr:"Azzam bekerja di kantor itu."},
+      {before:"ゼハンさんは くるまを もって",options:["います","ました","ません"],answer:"います",after:"。",tr:"Zehan punya mobil."},
+      {before:"もう ごはんを たべましたか。…いいえ、",options:["まだです","もうです","いまです"],answer:"まだです",after:"。",tr:"Belum makan."}
+    ],
+    build:[
+      {prompt:"Susun: \"Nur sedang baca buku.\"",tiles:["ヌールさん","は","ほんを","よんでいます"],answer:["ヌールさん","は","ほんを","よんでいます"],tr:"Nuuru-san wa hon o yondeimasu."},
+      {prompt:"Susun: \"Kinza tinggal di Jakarta.\"",tiles:["キンザさん","は","ジャカルタに","すんでいます"],answer:["キンザさん","は","ジャカルタに","すんでいます"],tr:"Kinza-san wa Jakaruta ni sundeimasu."},
+      {prompt:"Susun: \"Dadik kenal Nur.\"",tiles:["ダディックさん","は","ヌールさんを","しっています"],answer:["ダディックさん","は","ヌールさんを","しっています"],tr:"Dadikku-san wa Nuuru-san o shitteimasu."}
+    ]
+  }
+},
+{
+  id:19, title:"Bentuk Kamus dan Kemampuan",
+  focus:"Kata kerja bentuk kamus dan pola ~ことができます",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 20"],
+  vocabCore:[["たべる","taberu","makan (kamus)"],["のむ","nomu","minum (kamus)"],["いく","iku","pergi (kamus)"],["くる","kuru","datang (kamus)"],["かえる","kaeru","pulang (kamus)"],["みる","miru","lihat (kamus)"],["よむ","yomu","baca (kamus)"],["かう","kau","beli (kamus)"],["する","suru","melakukan (kamus)"],["こと","koto","hal (nominalizer)"]],
+  vocabTheme:[["ことができます","koto ga dekimasu","bisa melakukan ~"],["りょうりする","ryourisuru","memasak"],["およぐ","oyogu","berenang (kamus)"],["はしる","hashiru","berlari (kamus)"],["うたう","utau","bernyanyi (kamus)"],["おどる","odoru","menari (kamus)"],["つくる","tsukuru","membuat (kamus)"],["なおす","naosu","memperbaiki (kamus)"],["はなす","hanasu","berbicara (kamus)"],["うんてんする","untensuru","menyetir"]],
+  patterns:[
+    {jp:"〜ことができます",mean:"→ Bisa melakukan ~ (verb kamus + koto)",examples:[
+      {jp:"ダディックさんは およぐことが できます。",rj:"Dadikku-san wa oyogu koto ga dekimasu.",id:"Dadik bisa berenang."},
+      {jp:"ヌールさんは にほんごを はなすことが できます。",rj:"Nuuru-san wa nihongo o hanasu koto ga dekimasu.",id:"Nur bisa bicara bahasa Jepang."}]},
+    {jp:"negatif 〜ことができません",mean:"→ Tidak bisa melakukan ~",examples:[
+      {jp:"アッザムさんは おどることが できません。",rj:"Azzamu-san wa odoru koto ga dekimasen.",id:"Azzam tidak bisa menari."},
+      {jp:"わたしは うたを うたうことが できません。",rj:"Watashi wa uta o utau koto ga dekimasen.",id:"Saya tidak bisa menyanyi."}]},
+    {jp:"tanya kemampuan",mean:"→ なにを することができますか",examples:[
+      {jp:"なにを することが できますか。",rj:"Nani o suru koto ga dekimasu ka.",id:"Bisa melakukan apa?",sub:"…りょうりを することが できます。 (Bisa memasak.)"},
+      {jp:"およぐことが できますか。",rj:"Oyogu koto ga dekimasu ka.",id:"Bisa berenang?",sub:"…はい、できます。 (Ya, bisa.)"}]},
+    {jp:"perbandingan できます vs ことができます",mean:"→ Dua cara ungkapan sama",examples:[
+      {jp:"うんてんが できます。",rj:"Unten ga dekimasu.",id:"Bisa menyetir. (untuk kata benda aktivitas)"},
+      {jp:"うんてんすることが できます。",rj:"Unten suru koto ga dekimasu.",id:"Bisa menyetir. (versi lengkap dengan kata kerja)"}]}
+  ],
+  explanation:["Kata kerja bentuk kamus adalah bentuk dasar sebelum dikonjugasi (contoh: たべます→たべる, のみます→のむ) — lihat tabel konjugasi lengkap di bawah.","<b>〜ことができます</b> dipakai untuk menyatakan kemampuan melakukan suatu kata kerja: [bentuk kamus]+こと+が+できます.","Untuk kata benda aktivitas (seperti うんてん, りょうり), できます juga bisa dipakai langsung tanpa ことができます."],
+  conjugationTable:{formName:"辞書形", groups:[
+    {label:"Kelompok I", rows:[["かいます","かう"],["かきます","かく"],["およぎます","およぐ"],["はなします","はなす"],["たちます","たつ"],["よびます","よぶ"],["よみます","よむ"],["はいります","はいる（istimewa）"]]},
+    {label:"Kelompok II", rows:[["ねます","ねる"],["たべます","たべる"],["おきます","おきる"],["みます","みる"]]},
+    {label:"Kelompok III", rows:[["きます","くる"],["します","する"],["うんてんします","うんてんする"]]}
+  ]},
+  quiz:{
+    flashcard:[["makan (kamus)","たべる",["たべる","のむ","いく","くる"]],["pergi (kamus)","いく",["いく","くる","かえる","みる"]],["berenang (kamus)","およぐ",["およぐ","はしる","うたう","おどる"]],["berlari (kamus)","はしる",["はしる","およぐ","おどる","つくる"]],["bernyanyi (kamus)","うたう",["うたう","おどる","はしる","なおす"]],["menari (kamus)","おどる",["おどる","うたう","つくる","はなす"]],["membuat (kamus)","つくる",["つくる","なおす","はなす","うんてんする"]],["hal","こと",["こと","もの","ひと","とき"]]],
+    dropdown:[
+      {before:"ダディックさんは およぐ",options:["ことができます","ことがすきです","ことがじょうずです"],answer:"ことができます",after:"。",tr:"Dadik bisa berenang."},
+      {before:"アッザムさんは おどる",options:["ことができません","ことができます","ことがすきです"],answer:"ことができません",after:"。",tr:"Azzam tidak bisa menari."},
+      {before:"なにを する",options:["ことができますか","ことがすきですか","ことがじょうずですか"],answer:"ことができますか",after:"。",tr:"Bisa melakukan apa?"},
+      {before:"うんてん",options:["が","を","に"],answer:"が",after:"できます。",tr:"Bisa menyetir."}
+    ],
+    build:[
+      {prompt:"Susun: \"Nur bisa bicara bahasa Jepang.\"",tiles:["ヌールさん","は","にほんごを","はなすことが","できます"],answer:["ヌールさん","は","にほんごを","はなすことが","できます"],tr:"Nuuru-san wa nihongo o hanasu koto ga dekimasu."},
+      {prompt:"Susun: \"Saya tidak bisa menyanyi.\"",tiles:["わたし","は","うたを","うたうことが","できません"],answer:["わたし","は","うたを","うたうことが","できません"],tr:"Watashi wa uta o utau koto ga dekimasen."},
+      {prompt:"Susun: \"Bisa berenang?\"",tiles:["およぐ","ことが","できますか"],answer:["およぐ","ことが","できますか"],tr:"Oyogu koto ga dekimasu ka."}
+    ]
+  }
+},
+{
+  id:20, title:"Sebelum dan Sesudah",
+  focus:"Pola ~まえに dan ~あとで",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 21"],
+  vocabCore:[["まえに","mae ni","sebelum"],["あとで","ato de","sesudah"],["ねるまえに","neru mae ni","sebelum tidur"],["たべるまえに","taberu mae ni","sebelum makan"],["しごとのまえに","shigoto no mae ni","sebelum kerja"],["しごとのあとで","shigoto no ato de","sesudah kerja"],["てをあらいます","te o araimasu","cuci tangan"],["はをみがきます","ha o migakimasu","sikat gigi"],["ばん","ban","malam"],["あさ","asa","pagi"]],
+  vocabTheme:[["シャワーをあびます","shawaa o abimasu","mandi shower"],["しゅくだい","shukudai","PR"],["かいぎ","kaigi","rapat"],["テスト","tesuto","tes"],["うんどう","undou","olahraga"],["さんぽ","sanpo","jalan-jalan santai"],["おふろ","ofuro","mandi berendam"],["しんぶん","shinbun","koran"],["コーヒー","koohii","kopi"],["ふゆ","fuyu","musim dingin"]],
+  patterns:[
+    {jp:"〜まえに",mean:"→ Sebelum melakukan ~",examples:[
+      {jp:"ねるまえに、はを みがきます。",rj:"Neru mae ni, ha o migakimasu.",id:"Sebelum tidur, sikat gigi."},
+      {jp:"たべるまえに、てを あらいます。",rj:"Taberu mae ni, te o araimasu.",id:"Sebelum makan, cuci tangan."}]},
+    {jp:"〜のまえに",mean:"→ Sebelum kata benda/waktu tertentu",examples:[
+      {jp:"しごとの まえに、コーヒーを のみます。",rj:"Shigoto no mae ni, koohii o nomimasu.",id:"Sebelum kerja, minum kopi."},
+      {jp:"テストの まえに、べんきょうします。",rj:"Tesuto no mae ni, benkyoushimasu.",id:"Sebelum tes, belajar."}]},
+    {jp:"〜あとで",mean:"→ Sesudah melakukan ~",examples:[
+      {jp:"ごはんを たべたあとで、テレビを みます。",rj:"Gohan o tabeta ato de, terebi o mimasu.",id:"Sesudah makan nasi, nonton TV."},
+      {jp:"しごとの あとで、うんどうを します。",rj:"Shigoto no ato de, undou o shimasu.",id:"Sesudah kerja, olahraga."}]},
+    {jp:"gabungan まえに/あとで",mean:"→ Latihan rutinitas",examples:[
+      {jp:"あさ、シャワーを あびるまえに、うんどうを します。",rj:"Asa, shawaa o abiru mae ni, undou o shimasu.",id:"Pagi, sebelum mandi, olahraga."},
+      {jp:"よる、おふろの あとで、ねます。",rj:"Yoru, ofuro no ato de, nemasu.",id:"Malam, sesudah mandi (berendam), tidur."}]}
+  ],
+  explanation:["<b>〜まえに</b> dipakai setelah kata kerja bentuk kamus (atau langsung setelah kata benda+の) untuk menyatakan \"sebelum melakukan X\".","<b>〜あとで</b> dipakai setelah kata kerja bentuk lampau kamus (~た) atau kata benda+の untuk menyatakan \"sesudah melakukan X\"."],
+  quiz:{
+    flashcard:[["sebelum","まえに",["まえに","あとで","ながら","ことが"]],["sesudah","あとで",["あとで","まえに","ながら","ことが"]],["cuci tangan","てをあらいます",["てをあらいます","はをみがきます","かおをあらいます","シャワーをあびます"]],["sikat gigi","はをみがきます",["はをみがきます","てをあらいます","おふろにはいります","そうじします"]],["pagi","あさ",["あさ","ひる","よる","ばん"]],["malam","ばん",["ばん","あさ","ひる","きょう"]],["olahraga","うんどう",["うんどう","さんぽ","しゅくだい","かいぎ"]],["mandi berendam","おふろ",["おふろ","シャワー","うんどう","さんぽ"]]],
+    dropdown:[
+      {before:"ねる",options:["まえに","あとで","ながら"],answer:"まえに",after:"はをみがきます。",tr:"Sebelum tidur, sikat gigi."},
+      {before:"しごとの",options:["まえに","あとで","ながら"],answer:"まえに",after:"コーヒーをのみます。",tr:"Sebelum kerja, minum kopi."},
+      {before:"ごはんをたべた",options:["あとで","まえに","ながら"],answer:"あとで",after:"テレビをみます。",tr:"Sesudah makan, nonton TV."},
+      {before:"しごとの",options:["あとで","まえに","ながら"],answer:"あとで",after:"うんどうをします。",tr:"Sesudah kerja, olahraga."}
+    ],
+    build:[
+      {prompt:"Susun: \"Sebelum makan, cuci tangan.\"",tiles:["たべる","まえに","てを","あらいます"],answer:["たべる","まえに","てを","あらいます"],tr:"Taberu mae ni, te o araimasu."},
+      {prompt:"Susun: \"Sebelum tes, belajar.\"",tiles:["テスト","の","まえに","べんきょうします"],answer:["テスト","の","まえに","べんきょうします"],tr:"Tesuto no mae ni, benkyoushimasu."},
+      {prompt:"Susun: \"Malam, sesudah mandi, tidur.\"",tiles:["よる","おふろの","あとで","ねます"],answer:["よる","おふろの","あとで","ねます"],tr:"Yoru, ofuro no ato de, nemasu."}
+    ]
+  }
+},
+{
+  id:21, title:"Pengalaman",
+  focus:"Pola ~たことがあります untuk menyatakan pengalaman",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 22"],
+  vocabCore:[["いったことがあります","itta koto ga arimasu","pernah pergi"],["たべたことがあります","tabeta koto ga arimasu","pernah makan"],["みたことがあります","mita koto ga arimasu","pernah lihat"],["きたことがあります","kita koto ga arimasu","pernah datang"],["いちど","ichido","sekali"],["にど","nido","dua kali"],["いままで","ima made","sampai sekarang"],["けいけん","keiken","pengalaman"],["がいこく","gaikoku","luar negeri"],["はいります","hairimasu","masuk"]],
+  vocabTheme:[["にほんりょうり","nihon ryouri","masakan Jepang"],["かんこく","kankoku","Korea"],["りょこう","ryokou","liburan/wisata"],["やま","yama","gunung"],["うみ","umi","laut"],["おんせん","onsen","pemandian air panas"],["まつり","matsuri","festival"],["はなび","hanabi","kembang api"],["どうぶつえん","doubutsuen","kebun binatang"],["こんど","kondo","lain kali/kali ini"]],
+  patterns:[
+    {jp:"〜たことがあります",mean:"→ Pernah melakukan ~",examples:[
+      {jp:"ダディックさんは にほんへ いったことが あります。",rj:"Dadikku-san wa nihon e itta koto ga arimasu.",id:"Dadik pernah pergi ke Jepang."},
+      {jp:"ヌールさんは にほんりょうりを たべたことが あります。",rj:"Nuuru-san wa nihon ryouri o tabeta koto ga arimasu.",id:"Nur pernah makan masakan Jepang."}]},
+    {jp:"negatif 〜たことがありません",mean:"→ Belum pernah melakukan ~",examples:[
+      {jp:"アッザムさんは おんせんに はいったことが ありません。",rj:"Azzamu-san wa onsen ni haitta koto ga arimasen.",id:"Azzam belum pernah masuk onsen."},
+      {jp:"わたしは かんこくへ いったことが ありません。",rj:"Watashi wa kankoku e itta koto ga arimasen.",id:"Saya belum pernah pergi ke Korea."}]},
+    {jp:"tanya pengalaman",mean:"→ ~たことがありますか",examples:[
+      {jp:"にほんへ いったことが ありますか。",rj:"Nihon e itta koto ga arimasu ka.",id:"Pernah pergi ke Jepang?",sub:"…はい、いちど あります。 (Ya, sekali.)"},
+      {jp:"はなびを みたことが ありますか。",rj:"Hanabi o mita koto ga arimasu ka.",id:"Pernah lihat kembang api?",sub:"…いいえ、ありません。 (Belum pernah.)"}]},
+    {jp:"いちど/にど",mean:"→ Menyebutkan frekuensi",examples:[
+      {jp:"キンザさんは にほんへ にど いったことが あります。",rj:"Kinza-san wa nihon e nido itta koto ga arimasu.",id:"Kinza pernah ke Jepang dua kali."},
+      {jp:"ゼハンさんは まつりに いちど いったことが あります。",rj:"Zehan-san wa matsuri ni ichido itta koto ga arimasu.",id:"Zehan pernah ke festival sekali."}]}
+  ],
+  explanation:["<b>〜たことがあります</b> dipakai untuk menyatakan pengalaman pernah melakukan sesuatu, memakai kata kerja bentuk lampau (~た) + ことがあります — lihat tabel konjugasinya di bawah.","Bentuk negatif: <b>〜たことがありません</b> (belum pernah).","<b>いちど</b> = sekali, <b>にど</b> = dua kali — dipakai untuk menyebutkan frekuensi pengalaman."],
+  conjugationTable:{formName:"た形", groups:[
+    {label:"Kelompok I", rows:[["かきます","かいた"],["およぎます","およいだ"],["はなします","はなした"],["まちます","まった"],["のみます","のんだ"],["よびます","よんだ"],["とまります","とまった"],["いきます","いった（istimewa）"]]},
+    {label:"Kelompok II", rows:[["たべます","たべた"],["でかけます","でかけた"],["おきます","おきた"],["みます","みた"]]},
+    {label:"Kelompok III", rows:[["きます","きた"],["します","した"],["せんたくします","せんたくした"]]}
+  ]},
+  quiz:{
+    flashcard:[["sekali","いちど",["いちど","にど","いつも","まいにち"]],["dua kali","にど",["にど","いちど","さんど","まいにち"]],["pengalaman","けいけん",["けいけん","りょこう","まつり","はなび"]],["luar negeri","がいこく",["がいこく","にほん","かんこく","やま"]],["gunung","やま",["やま","うみ","おんせん","どうぶつえん"]],["laut","うみ",["うみ","やま","おんせん","まつり"]],["festival","まつり",["まつり","はなび","りょこう","おんせん"]],["kembang api","はなび",["はなび","まつり","りょこう","どうぶつえん"]]],
+    dropdown:[
+      {before:"ダディックさんは にほんへ いった",options:["ことがあります","ことができます","ことがすきです"],answer:"ことがあります",after:"。",tr:"Dadik pernah pergi ke Jepang."},
+      {before:"アッザムさんは おんせんに はいった",options:["ことがありません","ことがあります","ことができません"],answer:"ことがありません",after:"。",tr:"Azzam belum pernah masuk onsen."},
+      {before:"にほんへ いった",options:["ことがありますか","ことができますか","ことがすきですか"],answer:"ことがありますか",after:"。",tr:"Pernah pergi ke Jepang?"},
+      {before:"キンザさんは にほんへ",options:["にど","いちど","いつも"],answer:"にど",after:"いったことがあります。",tr:"Kinza pernah ke Jepang dua kali."}
+    ],
+    build:[
+      {prompt:"Susun: \"Nur pernah makan masakan Jepang.\"",tiles:["ヌールさん","は","にほんりょうりを","たべたことが","あります"],answer:["ヌールさん","は","にほんりょうりを","たべたことが","あります"],tr:"Nuuru-san wa nihon ryouri o tabeta koto ga arimasu."},
+      {prompt:"Susun: \"Saya belum pernah pergi ke Korea.\"",tiles:["わたし","は","かんこくへ","いったことが","ありません"],answer:["わたし","は","かんこくへ","いったことが","ありません"],tr:"Watashi wa kankoku e itta koto ga arimasen."},
+      {prompt:"Susun: \"Pernah lihat kembang api?\"",tiles:["はなび","を","みたことが","ありますか"],answer:["はなび","を","みたことが","ありますか"],tr:"Hanabi o mita koto ga arimasu ka."}
+    ]
+  }
+},
+{
+  id:22, title:"Menyebutkan Beberapa Aktivitas",
+  focus:"Pola ~たり~たりします",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 23"],
+  vocabCore:[["たり","tari","(contoh aktivitas)"],["およいだり","oyoidari","berenang, dsb"],["あるいたり","aruitari","jalan, dsb"],["よんだり","yondari","baca, dsb"],["みたり","mitari","nonton, dsb"],["かいたり","kaitari","beli/tulis, dsb"],["つくったり","tsukuttari","membuat, dsb"],["きいたり","kiitari","dengar, dsb"],["はなしたり","hanashitari","ngobrol, dsb"],["あそんだり","asondari","main, dsb"]],
+  vocabTheme:[["しゅうまつ","shuumatsu","akhir pekan"],["やすみのひ","yasumi no hi","hari libur"],["れんきゅう","renkyuu","libur panjang"],["かいものをします","kaimono o shimasu","belanja"],["こうえん","kouen","taman"],["うみ","umi","laut"],["やま","yama","gunung"],["いえ","ie","rumah"],["としょかん","toshokan","perpustakaan"],["たのしみです","tanoshimi desu","tidak sabar/menantikan"]],
+  patterns:[
+    {jp:"〜たり〜たりします",mean:"→ Menyebut beberapa contoh aktivitas",examples:[
+      {jp:"しゅうまつは ほんを よんだり、おんがくを きいたりします。",rj:"Shuumatsu wa hon o yondari, ongaku o kiitari shimasu.",id:"Akhir pekan baca buku, dengar musik, dsb."},
+      {jp:"こうえんで あるいたり、はなしたりします。",rj:"Kouen de aruitari, hanashitari shimasu.",id:"Di taman jalan-jalan, ngobrol, dsb."}]},
+    {jp:"lanjutan dengan subjek berbeda",mean:"→ Latihan tambahan",examples:[
+      {jp:"ダディックさんは やすみのひ、およいだり、りょうりを つくったりします。",rj:"Dadikku-san wa yasumi no hi, oyoidari, ryouri o tsukuttari shimasu.",id:"Hari libur, Dadik berenang, masak, dsb."},
+      {jp:"ヌールさんは ともだちと あそんだり、かいものを したりします。",rj:"Nuuru-san wa tomodachi to asondari, kaimono o shitari shimasu.",id:"Nur main bareng teman, belanja, dsb."}]},
+    {jp:"tanya aktivitas liburan",mean:"→ しゅうまつ なにを しますか",examples:[
+      {jp:"しゅうまつ なにを しますか。",rj:"Shuumatsu nani o shimasu ka.",id:"Akhir pekan ngapain?",sub:"…えいがを みたり、ほんを よんだりします。 (Nonton film, baca buku, dsb.)"},
+      {jp:"やすみのひ なにを しましたか。",rj:"Yasumi no hi nani o shimashita ka.",id:"Hari libur ngapain?",sub:"…やまへ いったり、しゃしんを とったりしました。 (Pergi ke gunung, foto-foto, dsb.)"}]},
+    {jp:"dialog pendek",mean:"→ Latihan percakapan",examples:[
+      {jp:"アッザムさんと ゼハンさんは うみで およいだり、しゃしんを とったりしました。",rj:"Azzamu-san to Zehan-san wa umi de oyoidari, shashin o tottari shimashita.",id:"Azzam dan Zehan berenang, foto-foto di laut, dsb."},
+      {jp:"キンザさんは いえで やすんだり、テレビを みたりします。",rj:"Kinza-san wa ie de yasundari, terebi o mitari shimasu.",id:"Kinza istirahat, nonton TV di rumah, dsb."}]}
+  ],
+  explanation:["<b>〜たり〜たりします</b> dipakai untuk menyebutkan beberapa contoh aktivitas dari banyak hal yang dilakukan — tidak menyebutkan semuanya, hanya beberapa contoh mewakili.","Berbeda dari 〜て yang menyebutkan urutan lengkap semua aktivitas, たり lebih santai dan tidak berurutan.","Kata kerja diubah ke bentuk lampau kamus (~た/~だ) lalu ditambah り."],
+  quiz:{
+    flashcard:[["akhir pekan","しゅうまつ",["しゅうまつ","やすみのひ","れんきゅう","まいにち"]],["hari libur","やすみのひ",["やすみのひ","しゅうまつ","れんきゅう","きょう"]],["libur panjang","れんきゅう",["れんきゅう","しゅうまつ","やすみのひ","まいあさ"]],["belanja","かいものをします",["かいものをします","そうじします","べんきょうします","うんどうします"]],["taman","こうえん",["こうえん","うみ","やま","いえ"]],["laut","うみ",["うみ","やま","こうえん","としょかん"]],["gunung","やま",["やま","うみ","こうえん","いえ"]],["menantikan","たのしみです",["たのしみです","つまらないです","たいへんです","ひまです"]]],
+    dropdown:[
+      {before:"ほんを よん",options:["だり","で","だ"],answer:"だり",after:"、おんがくをきいたりします。",tr:"Baca buku, dengar musik, dsb."},
+      {before:"こうえんで あるい",options:["たり","て","た"],answer:"たり",after:"、はなしたりします。",tr:"Jalan-jalan, ngobrol, dsb."},
+      {before:"しゅうまつ なにを",options:["しますか","しましたか","します"],answer:"しますか",after:"。",tr:"Akhir pekan ngapain?"},
+      {before:"やすみのひ やまへ いっ",options:["たり","て","た"],answer:"たり",after:"、しゃしんをとったりしました。",tr:"Pergi ke gunung, foto-foto, dsb."}
+    ],
+    build:[
+      {prompt:"Susun: \"Akhir pekan ngapain?\"",tiles:["しゅうまつ","なにを","しますか"],answer:["しゅうまつ","なにを","しますか"],tr:"Shuumatsu nani o shimasu ka."},
+      {prompt:"Susun: \"Di taman jalan-jalan, ngobrol, dsb.\"",tiles:["こうえんで","あるいたり","はなしたり","します"],answer:["こうえんで","あるいたり","はなしたり","します"],tr:"Kouen de aruitari, hanashitari shimasu."},
+      {prompt:"Susun: \"Kinza istirahat, nonton TV di rumah, dsb.\"",tiles:["キンザさん","は","いえで","やすんだり","テレビをみたりします"],answer:["キンザさん","は","いえで","やすんだり","テレビをみたりします"],tr:"Kinza-san wa ie de yasundari, terebi o mitari shimasu."}
+    ]
+  }
+},
+{
+  id:23, title:"Keharusan dan Pengecualian",
+  focus:"~なければなりません dan ~なくてもいいです",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 24"],
+  vocabCore:[["なければなりません","nakereba narimasen","harus melakukan"],["なくてもいいです","nakutemo ii desu","tidak harus"],["はやく","hayaku","cepat/pagi-pagi"],["おきます","okimasu","bangun"],["しなければなりません","shinakereba narimasen","harus melakukan (suru)"],["やくそく","yakusoku","janji"],["きまり","kimari","aturan"],["ルール","ruuru","aturan (loanword)"],["じかん","jikan","waktu"],["しめきり","shimekiri","tenggat waktu"]],
+  vocabTheme:[["かいしゃ","kaisha","kantor"],["がっこう","gakkou","sekolah"],["でんしゃ","densha","kereta"],["バス","basu","bus"],["よてい","yotei","rencana/jadwal"],["つごう","tsugou","kondisi/kesempatan"],["きんようび","kinyoubi","hari Jumat"],["げつようび","getsuyoubi","hari Senin"],["しゅくだい","shukudai","PR"],["いつまでに","itsu made ni","sampai kapan"]],
+  patterns:[
+    {jp:"〜なければなりません",mean:"→ Harus melakukan ~",examples:[
+      {jp:"あした はやく おきなければ なりません。",rj:"Ashita hayaku okinakereba narimasen.",id:"Besok harus bangun pagi-pagi."},
+      {jp:"しゅくだいを しなければ なりません。",rj:"Shukudai o shinakereba narimasen.",id:"Harus mengerjakan PR."}]},
+    {jp:"〜なくてもいいです",mean:"→ Tidak harus melakukan ~",examples:[
+      {jp:"きょうは がっこうへ いかなくても いいです。",rj:"Kyou wa gakkou e ikanakutemo ii desu.",id:"Hari ini tidak harus pergi ke sekolah."},
+      {jp:"はやく おきなくても いいです。",rj:"Hayaku okinakutemo ii desu.",id:"Tidak harus bangun pagi."}]},
+    {jp:"tanya keharusan",mean:"→ ~なければなりませんか",examples:[
+      {jp:"いつまでに しゅくだいを しなければ なりませんか。",rj:"Itsu made ni shukudai o shinakereba narimasen ka.",id:"Sampai kapan harus mengerjakan PR?",sub:"…きんようびまでです。 (Sampai hari Jumat.)"},
+      {jp:"きょう かいしゃへ いかなければ なりませんか。",rj:"Kyou kaisha e ikanakereba narimasen ka.",id:"Hari ini harus pergi ke kantor?",sub:"…いいえ、いかなくても いいです。 (Tidak, tidak harus.)"}]},
+    {jp:"review pola keharusan",mean:"→ Latihan bebas",examples:[
+      {jp:"ダディックさんは まいあさ はやく おきなければ なりません。",rj:"Dadikku-san wa maiasa hayaku okinakereba narimasen.",id:"Dadik harus bangun pagi-pagi setiap hari."},
+      {jp:"きょうは やすみですから、はやく おきなくても いいです。",rj:"Kyou wa yasumi desukara, hayaku okinakutemo ii desu.",id:"Hari ini libur, jadi tidak harus bangun pagi."}]}
+  ],
+  explanation:["Pola <b>〜なければなりません</b> dipakai untuk menyatakan keharusan melakukan sesuatu — secara harfiah berarti \"kalau tidak melakukan, tidak baik\".","<b>〜なくてもいいです</b> menyatakan kebalikannya: tidak diharuskan melakukan sesuatu."],
+  quiz:{
+    flashcard:[["harus melakukan","なければなりません",["なければなりません","なくてもいいです","てください","てもいいです"]],["tidak harus","なくてもいいです",["なくてもいいです","なければなりません","てはいけません","てください"]],["janji","やくそく",["やくそく","きまり","じかん","しめきり"]],["aturan","きまり",["きまり","やくそく","じかん","よてい"]],["waktu","じかん",["じかん","しめきり","よてい","つごう"]],["tenggat waktu","しめきり",["しめきり","じかん","やくそく","きまり"]],["rencana/jadwal","よてい",["よてい","つごう","じかん","やくそく"]],["sampai kapan","いつまでに",["いつまでに","いつ","どこまで","なんじ"]]],
+    dropdown:[
+      {before:"あした はやく おき",options:["なければなりません","なくてもいいです","てください"],answer:"なければなりません",after:"。",tr:"Besok harus bangun pagi-pagi."},
+      {before:"きょうは がっこうへ いか",options:["なくてもいいです","なければなりません","てはいけません"],answer:"なくてもいいです",after:"。",tr:"Hari ini tidak harus pergi ke sekolah."},
+      {before:"いつまでに しゅくだいを し",options:["なければなりませんか","なくてもいいですか","てもいいですか"],answer:"なければなりませんか",after:"。",tr:"Sampai kapan harus mengerjakan PR?"},
+      {before:"きょうは やすみですから、はやく おき",options:["なくてもいいです","なければなりません","てください"],answer:"なくてもいいです",after:"。",tr:"Hari ini libur, jadi tidak harus bangun pagi."}
+    ],
+    build:[
+      {prompt:"Susun: \"Harus mengerjakan PR.\"",tiles:["しゅくだい","を","しなければ","なりません"],answer:["しゅくだい","を","しなければ","なりません"],tr:"Shukudai o shinakereba narimasen."},
+      {prompt:"Susun: \"Tidak harus bangun pagi.\"",tiles:["はやく","おきなくても","いいです"],answer:["はやく","おきなくても","いいです"],tr:"Hayaku okinakutemo ii desu."},
+      {prompt:"Susun: \"Hari ini harus pergi ke kantor?\"",tiles:["きょう","かいしゃへ","いかなければ","なりませんか"],answer:["きょう","かいしゃへ","いかなければ","なりませんか"],tr:"Kyou kaisha e ikanakereba narimasen ka."}
+    ]
+  }
+},
+{
+  id:24, title:"Dugaan dan Alasan",
+  focus:"~でしょう untuk dugaan, dan ~からです untuk alasan",
+  plan:["Hari 1: Hafalkan kosakata + baca Pola 1-2","Hari 2: Baca Pola 3-4 + latihan susun kalimat","Hari 3: Kerjakan quiz sampai skor 80%+, lalu lanjut Bab 25"],
+  vocabCore:[["でしょう","deshou","mungkin/dugaan"],["たぶん","tabun","mungkin"],["きっと","kitto","pasti"],["あめ","ame","hujan"],["はれ","hare","cerah"],["くもり","kumori","mendung"],["てんき","tenki","cuaca"],["さむい","samui","dingin"],["あつい","atsui","panas"],["あした","ashita","besok"]],
+  vocabTheme:[["たいふう","taifuu","topan"],["ゆき","yuki","salju"],["かぜ","kaze","angin/flu"],["てんきよほう","tenki yohou","ramalan cuaca"],["あさって","asatte","lusa"],["らいしゅう","raishuu","minggu depan"],["らいげつ","raigetsu","bulan depan"],["らいねん","rainen","tahun depan"],["ふゆ","fuyu","musim dingin"],["びょうき","byouki","sakit"]],
+  patterns:[
+    {jp:"〜でしょう",mean:"→ Dugaan tentang masa depan/cuaca",examples:[
+      {jp:"あしたは あめでしょう。",rj:"Ashita wa ame deshou.",id:"Besok mungkin hujan."},
+      {jp:"らいしゅうは さむいでしょう。",rj:"Raishuu wa samui deshou.",id:"Minggu depan mungkin dingin."}]},
+    {jp:"たぶん/きっと",mean:"→ Tingkat keyakinan dugaan",examples:[
+      {jp:"たぶん あしたは はれでしょう。",rj:"Tabun ashita wa hare deshou.",id:"Mungkin besok cerah."},
+      {jp:"きっと テストは むずかしいでしょう。",rj:"Kitto tesuto wa muzukashii deshou.",id:"Pasti tesnya sulit."}]},
+    {jp:"〜からです",mean:"→ Memberi alasan",examples:[
+      {jp:"きょうは さむいです。ふゆだからです。",rj:"Kyou wa samui desu. Fuyu dakara desu.",id:"Hari ini dingin. Karena musim dingin."},
+      {jp:"がっこうを やすみます。びょうきだからです。",rj:"Gakkou o yasumimasu. Byouki dakara desu.",id:"Libur sekolah. Karena sakit."}]},
+    {jp:"gabungan dugaan + alasan",mean:"→ Latihan bebas",examples:[
+      {jp:"らいねんも いそがしいでしょう。しごとが おおいからです。",rj:"Rainen mo isogashii deshou. Shigoto ga ooi kara desu.",id:"Tahun depan mungkin sibuk juga. Karena pekerjaan banyak."},
+      {jp:"あさっては たぶん はれでしょう。",rj:"Asatte wa tabun hare deshou.",id:"Lusa mungkin cerah."}]}
+  ],
+  explanation:["<b>〜でしょう</b> dipakai untuk menyatakan dugaan/prediksi, sering dipakai untuk ramalan cuaca.","<b>たぶん</b> (mungkin) dan <b>きっと</b> (pasti) dipakai di awal kalimat untuk memperjelas tingkat keyakinan dugaan.","<b>〜からです</b> dipakai untuk memberi alasan atas pernyataan sebelumnya, ditempel di akhir kalimat kedua."],
+  quiz:{
+    flashcard:[["mungkin/dugaan","でしょう",["でしょう","からです","ながら","まえに"]],["mungkin","たぶん",["たぶん","きっと","もう","まだ"]],["pasti","きっと",["きっと","たぶん","いつも","ぜんぜん"]],["hujan","あめ",["あめ","はれ","くもり","ゆき"]],["cerah","はれ",["はれ","あめ","くもり","かぜ"]],["mendung","くもり",["くもり","あめ","はれ","たいふう"]],["salju","ゆき",["ゆき","あめ","はれ","くもり"]],["minggu depan","らいしゅう",["らいしゅう","せんしゅう","らいげつ","らいねん"]]],
+    dropdown:[
+      {before:"あしたは あめ",options:["でしょう","からです","ながら"],answer:"でしょう",after:"。",tr:"Besok mungkin hujan."},
+      {before:"たぶん あしたは",options:["はれでしょう","はれです","はれでした"],answer:"はれでしょう",after:"。",tr:"Mungkin besok cerah."},
+      {before:"きょうは さむいです。ふゆだ",options:["からです","でしょう","ながら"],answer:"からです",after:"。",tr:"Hari ini dingin. Karena musim dingin."},
+      {before:"がっこうを やすみます。びょうきだ",options:["からです","でしょう","まえに"],answer:"からです",after:"。",tr:"Libur sekolah. Karena sakit."}
+    ],
+    build:[
+      {prompt:"Susun: \"Minggu depan mungkin dingin.\"",tiles:["らいしゅう","は","さむい","でしょう"],answer:["らいしゅう","は","さむい","でしょう"],tr:"Raishuu wa samui deshou."},
+      {prompt:"Susun: \"Pasti tesnya sulit.\"",tiles:["きっと","テスト","は","むずかしい","でしょう"],answer:["きっと","テスト","は","むずかしい","でしょう"],tr:"Kitto tesuto wa muzukashii deshou."},
+      {prompt:"Susun: \"Libur sekolah. Karena sakit.\"",tiles:["がっこう","を","やすみます","びょうきだからです"],answer:["がっこう","を","やすみます","びょうきだからです"],tr:"Gakkou o yasumimasu. Byouki dakara desu."}
+    ]
+  }
+},
+{
+  id:25, title:"Review Gabungan",
+  focus:"Menggabungkan seluruh pola Bab 1-24 dalam kalimat yang lebih natural",
+  plan:["Hari 1: Baca ulang ringkasan semua pola + kosakata review","Hari 2: Baca contoh kalimat gabungan + latihan susun kalimat","Hari 3: Kerjakan quiz campuran sampai skor 80%+ — selamat, kamu sudah menyelesaikan level dasar!"],
+  vocabCore:[["いきます","ikimasu","pergi"],["たべます","tabemasu","makan"],["のみます","nomimasu","minum"],["あります","arimasu","ada (benda)"],["います","imasu","ada (makhluk hidup)"],["すきです","suki desu","suka"],["できます","dekimasu","bisa"],["わかります","wakarimasu","mengerti"],["でしょう","deshou","mungkin/dugaan"],["ことがあります","koto ga arimasu","pernah"]],
+  vocabTheme:[["がっこう","gakkou","sekolah"],["かいしゃ","kaisha","kantor"],["うち","uchi","rumah"],["ともだち","tomodachi","teman"],["かぞく","kazoku","keluarga"],["しごと","shigoto","pekerjaan"],["がくせい","gakusei","murid"],["せんせい","sensei","guru"],["にほんご","nihongo","bahasa Jepang"],["えいご","eigo","bahasa Inggris"]],
+  patterns:[
+    {jp:"gabungan waktu + aktivitas + alasan",mean:"→ Merangkai beberapa pola sekaligus",examples:[
+      {jp:"あした はやく おきて、がっこうへ いきます。テストが あるからです。",rj:"Ashita hayaku okite, gakkou e ikimasu. Tesuto ga aru kara desu.",id:"Besok bangun pagi lalu ke sekolah. Karena ada tes."},
+      {jp:"きのう うちで べんきょうしながら おんがくを ききました。",rj:"Kinou uchi de benkyoushinagara ongaku o kikimashita.",id:"Kemarin belajar di rumah sambil dengar musik."}]},
+    {jp:"gabungan pengalaman + kemampuan",mean:"→ Latihan tambahan",examples:[
+      {jp:"ダディックさんは にほんへ いったことが あります。にほんごを はなすことも できます。",rj:"Dadikku-san wa nihon e itta koto ga arimasu. Nihongo o hanasu koto mo dekimasu.",id:"Dadik pernah ke Jepang. Bisa bicara bahasa Jepang juga."},
+      {jp:"ヌールさんは すいえいが すきで、およぐことも できます。",rj:"Nuuru-san wa suiei ga suki de, oyogu koto mo dekimasu.",id:"Nur suka berenang, dan bisa berenang juga."}]},
+    {jp:"gabungan keharusan + izin",mean:"→ Latihan tambahan",examples:[
+      {jp:"あした テストが ありますから、べんきょうしなければ なりません。でも、テレビを みても いいです、すこしだけ。",rj:"Ashita tesuto ga arimasu kara, benkyoushinakereba narimasen. Demo, terebi o mitemo ii desu, sukoshi dake.",id:"Karena besok ada tes, harus belajar. Tapi boleh nonton TV, sedikit saja."},
+      {jp:"きょうは やすみですから、はやく おきなくても いいです。",rj:"Kyou wa yasumi desukara, hayaku okinakutemo ii desu.",id:"Hari ini libur, jadi tidak harus bangun pagi."}]},
+    {jp:"dialog pendek gabungan",mean:"→ Latihan percakapan penutup",examples:[
+      {jp:"A：しゅうまつ なにを しますか。 B：ともだちと うみへ いったり、しゃしんを とったりします。たのしみです。",rj:"A: Shuumatsu nani o shimasu ka. B: Tomodachi to umi e ittari, shashin o tottari shimasu. Tanoshimi desu.",id:"A: Akhir pekan mau ngapain? B: Pergi ke pantai bareng teman, foto-foto, dsb. Nggak sabar."}]}
+  ],
+  explanation:["Bab ini menggabungkan semua pola dari Bab 1-24 dalam kalimat yang lebih panjang dan natural — bukan pola baru, tapi latihan merangkai apa yang sudah dipelajari.","Kalau ada pola yang masih terasa asing, kembali dulu ke bab terkait sebelum lanjut, karena Bab 25 murni pengulangan & penggabungan.","Selamat! Kalau sudah lulus quiz bab ini, kamu sudah punya modal dasar yang cukup kuat untuk lanjut ke level berikutnya (N5-N4)."],
+  quiz:{
+    flashcard:[["pergi","いきます",["いきます","たべます","のみます","あります"]],["ada (benda)","あります",["あります","います","すきです","できます"]],["ada (makhluk hidup)","います",["います","あります","わかります","でしょう"]],["suka","すきです",["すきです","できます","わかります","でしょう"]],["bisa","できます",["できます","すきです","わかります","あります"]],["mengerti","わかります",["わかります","できます","すきです","います"]],["mungkin/dugaan","でしょう",["でしょう","ことがあります","わかります","できます"]],["pernah","ことがあります",["ことがあります","でしょう","わかります","すきです"]]],
+    dropdown:[
+      {before:"あした テストが あります",options:["から","でしょう","ながら"],answer:"から",after:"、べんきょうしなければなりません。",tr:"Karena besok ada tes, harus belajar."},
+      {before:"ダディックさんは にほんへ いった",options:["ことがあります","ことができます","ことがすきです"],answer:"ことがあります",after:"。",tr:"Dadik pernah ke Jepang."},
+      {before:"ヌールさんは すいえい",options:["が","を","に"],answer:"が",after:"すきです。",tr:"Nur suka berenang."},
+      {before:"きょうは やすみです",options:["から","でしょう","まえに"],answer:"から",after:"、はやくおきなくてもいいです。",tr:"Hari ini libur, jadi tidak harus bangun pagi."}
+    ],
+    build:[
+      {prompt:"Susun: \"Karena besok ada tes, harus belajar.\"",tiles:["あした","テストが","ありますから","べんきょうしなければなりません"],answer:["あした","テストが","ありますから","べんきょうしなければなりません"],tr:"Ashita tesuto ga arimasu kara, benkyoushinakereba narimasen."},
+      {prompt:"Susun: \"Nur suka berenang, dan bisa berenang juga.\"",tiles:["ヌールさん","は","すいえいが","すきで","およぐこともできます"],answer:["ヌールさん","は","すいえいが","すきで","およぐこともできます"],tr:"Nuuru-san wa suiei ga suki de, oyogu koto mo dekimasu."},
+      {prompt:"Susun: \"Akhir pekan mau ngapain?\"",tiles:["しゅうまつ","なにを","しますか"],answer:["しゅうまつ","なにを","しますか"],tr:"Shuumatsu nani o shimasu ka."}
+    ]
+  }
+}
+];
+
+const TOTAL_CHAPTERS = 25;
+
+/* =========================================================
+   STORAGE
+   ========================================================= */
+const STORE_KEY = "ngebutNihongoProgress";
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return { chapters: {}, lastActive: null, streak: 0 };
+    return JSON.parse(raw);
+  } catch (e) {
+    return { chapters: {}, lastActive: null, streak: 0 };
+  }
+}
+function saveStore(store) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+function chapterState(store, id) {
+  if (!store.chapters[id]) store.chapters[id] = { vocab: false, materi: false, quizPassed: false, bestScore: 0 };
+  return store.chapters[id];
+}
+function touchStreak(store) {
+  const today = new Date().toISOString().slice(0,10);
+  if (store.lastActive === today) return store;
+  if (!store.lastActive) {
+    store.streak = 1;
+  } else {
+    const prev = new Date(store.lastActive);
+    const diffDays = Math.round((new Date(today) - prev) / 86400000);
+    store.streak = diffDays === 1 ? store.streak + 1 : 1;
+  }
+  store.lastActive = today;
+  saveStore(store);
+  return store;
+}
+
+let store = touchStreak(loadStore());
+let currentChapterId = null;
+let quizQueue = [];
+let quizIndex = 0;
+let quizCorrect = 0;
+let quizAnswered = false;
+let buildSelection = [];
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+function goTo(screen) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-" + screen).classList.add("active");
+  window.scrollTo(0,0);
+  if (screen === "dashboard") renderDashboard();
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+function renderDashboard() {
+  document.getElementById("statStreak").textContent = store.streak;
+  const realChapters = CHAPTERS.filter(c => c.id >= 1);
+  const doneCount = realChapters.filter(c => {
+    const cs = store.chapters[c.id];
+    return cs && cs.vocab && cs.materi && cs.quizPassed;
+  }).length;
+  document.getElementById("statDone").textContent = doneCount + "/" + TOTAL_CHAPTERS;
+  document.getElementById("overallFill").style.width = Math.round((doneCount / TOTAL_CHAPTERS) * 100) + "%";
+
+  const list = document.getElementById("chapterList");
+  list.innerHTML = "";
+
+  const introDone = store.introDone;
+  const introCard = document.createElement("div");
+  introCard.className = "chapter-card intro-card";
+  introCard.onclick = () => openIntro();
+  introCard.innerHTML = `
+    <div class="num">あ</div>
+    <div class="info">
+      <div class="t">Hiragana &amp; Katakana</div>
+      <div class="s">${introDone ? "✓ Selesai dipelajari" : "Wajib sebelum Bab 1 — mulai di sini"}</div>
+    </div>
+    <div class="chev">›</div>
+  `;
+  list.appendChild(introCard);
+
+  realChapters.forEach(ch => {
+    const cs = store.chapters[ch.id];
+    const done = cs && cs.vocab && cs.materi && cs.quizPassed;
+    const card = document.createElement("div");
+    card.className = "chapter-card";
+    card.onclick = () => openChapter(ch.id);
+    card.innerHTML = `
+      <div class="num">${ch.id}</div>
+      <div class="info">
+        <div class="t">${ch.title}</div>
+        <div class="s">${done ? "✓ Selesai" : ch.focus}</div>
+      </div>
+      <div class="chev">›</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function openIntro() {
+  const wrap = document.getElementById("kanaTablesWrap");
+  wrap.innerHTML = "";
+  wrap.appendChild(buildKanaSection("Hiragana — Dasar (Gojūon)", HIRAGANA_BASE));
+  wrap.appendChild(buildKanaSection("Hiragana — Dakuten & Handakuten", HIRAGANA_DAKUTEN));
+  wrap.appendChild(buildKanaSection("Katakana — Dasar (Gojūon)", KATAKANA_BASE));
+  wrap.appendChild(buildKanaSection("Katakana — Dakuten & Handakuten", KATAKANA_DAKUTEN));
+
+  const doneWrap = document.createElement("div");
+  doneWrap.className = "checklist";
+  doneWrap.innerHTML = `
+    <div class="ct">Progress</div>
+    <label class="check-row"><input type="checkbox" id="chkIntroDone"> Hiragana &amp; Katakana sudah dihafal</label>
+  `;
+  wrap.appendChild(doneWrap);
+  document.getElementById("chkIntroDone").checked = !!store.introDone;
+  document.getElementById("chkIntroDone").onchange = (e) => { store.introDone = e.target.checked; saveStore(store); };
+
+  goTo("intro");
+}
+
+function buildKanaSection(title, data) {
+  const section = document.createElement("div");
+  const heading = document.createElement("div");
+  heading.className = "kana-section-title";
+  heading.textContent = title;
+  section.appendChild(heading);
+  const grid = document.createElement("div");
+  grid.className = "kana-grid";
+  data.forEach(([ch, rj]) => {
+    const cell = document.createElement("div");
+    cell.className = "kana-cell";
+    cell.innerHTML = `<div class="ch">${ch}</div><div class="rj">${rj}</div>`;
+    grid.appendChild(cell);
+  });
+  section.appendChild(grid);
+  return section;
+}
+
+/* =========================================================
+   MATERI
+   ========================================================= */
+function openChapter(id) {
+  const ch = CHAPTERS.find(c => c.id === id);
+  if (!ch) return;
+  currentChapterId = id;
+  const cs = chapterState(store, id);
+
+  document.getElementById("materiTopTitle").textContent = "Bab " + id;
+  document.getElementById("materiBadge").textContent = "Bab " + id;
+  document.getElementById("materiTitle").textContent = ch.title;
+  document.getElementById("materiFocus").textContent = ch.focus;
+
+  document.getElementById("planList").innerHTML = ch.plan.map(p => `<li>${p}</li>`).join("");
+
+  document.getElementById("vocabCoreCount").textContent = "(" + ch.vocabCore.length + ")";
+  document.getElementById("vocabCoreRows").innerHTML = ch.vocabCore.map(v => vocabRow(v)).join("");
+  document.getElementById("vocabThemeCount").textContent = "(" + ch.vocabTheme.length + ")";
+  document.getElementById("vocabThemeRows").innerHTML = ch.vocabTheme.map(v => vocabRow(v)).join("");
+
+  const wrap = document.getElementById("patternsWrap");
+  wrap.innerHTML = "";
+  ch.patterns.forEach((p, idx) => {
+    const block = document.createElement("div");
+    block.className = "pattern-block";
+    let examplesHtml = p.examples.map(ex => `
+      <div class="example">
+        <div class="jp">${ex.jp}</div>
+        <div class="rj">${ex.rj}</div>
+        <div class="id">${ex.id}</div>
+        ${ex.sub ? `<div class="sub">${ex.sub}</div>` : ""}
+      </div>
+    `).join("");
+    block.innerHTML = `
+      <div><span class="pattern-num">${idx+1}</span><span class="pattern-jp">${p.jp}</span></div>
+      <div class="pattern-mean">${p.mean}</div>
+      ${examplesHtml}
+    `;
+    wrap.appendChild(block);
+  });
+
+  if (ch.conjugationTable) {
+    const ct = ch.conjugationTable;
+    const conjDiv = document.createElement("div");
+    conjDiv.className = "conj-wrap";
+    let groupsHtml = ct.groups.map(g => `
+      <div class="conj-group">
+        <div class="conj-group-label">${g.label}</div>
+        <table class="conj-table">
+          ${g.rows.map(r => `<tr><td>${r[0]}</td><td class="arrow">→</td><td class="result">${r[1]}</td></tr>`).join("")}
+        </table>
+      </div>
+    `).join("");
+    conjDiv.innerHTML = `<div class="conj-title">📋 Tabel Konjugasi: ます形 → ${ct.formName}</div>${groupsHtml}`;
+    wrap.appendChild(conjDiv);
+  }
+
+  document.getElementById("explanationBox").innerHTML = ch.explanation.map(p => `<p>${p}</p>`).join("");
+
+  document.getElementById("chkVocab").checked = cs.vocab;
+  document.getElementById("chkMateri").checked = cs.materi;
+  document.getElementById("chkQuiz").checked = cs.quizPassed;
+  document.getElementById("chkVocab").onchange = (e) => { cs.vocab = e.target.checked; saveStore(store); };
+  document.getElementById("chkMateri").onchange = (e) => { cs.materi = e.target.checked; saveStore(store); };
+
+  goTo("materi");
+}
+
+function vocabRow(v) {
+  return `<div class="vocab-row"><span class="jp">${v[0]}</span><span class="rj">${v[1]}</span><span class="id">${v[2]}</span></div>`;
+}
+
+/* =========================================================
+   QUIZ ENGINE — gabungan flashcard + dropdown + susun kalimat
+   ========================================================= */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const ch = CHAPTERS.find(c => c.id === currentChapterId);
+  const fc = shuffle(ch.quiz.flashcard).slice(0, 8).map(f => ({ type: "flashcard", data: f }));
+  const dd = ch.quiz.dropdown.map(d => ({ type: "dropdown", data: d }));
+  const bd = ch.quiz.build.map(b => ({ type: "build", data: b }));
+  quizQueue = shuffle([...fc, ...dd, ...bd]);
+  quizIndex = 0;
+  quizCorrect = 0;
+  renderQuizProgress();
+  renderQuizQuestion();
+  goTo("quiz");
+}
+
+function retryQuiz() { startQuiz(); }
+
+function renderQuizProgress() {
+  const wrap = document.getElementById("quizProgress");
+  wrap.innerHTML = "";
+  quizQueue.forEach((_, i) => {
+    const seg = document.createElement("div");
+    seg.className = "seg" + (i < quizIndex ? " done" : i === quizIndex ? " current" : "");
+    wrap.appendChild(seg);
+  });
+}
+
+function renderQuizQuestion() {
+  quizAnswered = false;
+  const item = quizQueue[quizIndex];
+  const body = document.getElementById("quizBody");
+  body.innerHTML = "";
+
+  const card = document.createElement("div");
+  card.className = "q-card";
+
+  if (item.type === "flashcard") {
+    const [meaning, correct, options] = item.data;
+    card.innerHTML = `
+      <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Tebak Kosakata</div>
+      <div class="q-prompt">${meaning}</div>
+      <div class="q-sub">Pilih kata Jepang yang cocok</div>
+      <div class="choice-grid" id="choiceGrid"></div>
+      <div class="feedback-row" id="feedback"></div>
+    `;
+    body.appendChild(card);
+    const grid = document.getElementById("choiceGrid");
+    shuffle(options).forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "choice-btn";
+      btn.textContent = opt;
+      btn.onclick = () => checkFlashcard(btn, opt, correct);
+      grid.appendChild(btn);
+    });
+  } else if (item.type === "dropdown") {
+    const q = item.data;
+    card.innerHTML = `
+      <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Lengkapi Kalimat</div>
+      <div class="sentence-line">
+        <span>${q.before}</span>
+        <select class="blank" id="ddInput"><option value="">?</option>${q.options.map(o=>`<option value="${o}">${o}</option>`).join("")}</select>
+        <span>${q.after}</span>
+      </div>
+      <div class="feedback-row" id="feedback"></div>
+      <div class="actions">
+        <button class="btn ghost" id="checkBtn">Cek Jawaban</button>
+        <button class="btn primary" id="nextBtn" disabled>Lanjut</button>
+      </div>
+    `;
+    body.appendChild(card);
+    document.getElementById("checkBtn").onclick = () => checkDropdown(q);
+    document.getElementById("nextBtn").onclick = nextQuestion;
+  } else if (item.type === "build") {
+    const q = item.data;
+    buildSelection = [];
+    const shuffledTiles = shuffle(q.tiles);
+    card.innerHTML = `
+      <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Susun Kalimat</div>
+      <div class="q-prompt" style="font-size:16px;">${q.prompt}</div>
+      <div class="build-line" id="buildLine"><span class="placeholder">Ketuk kata di bawah untuk menyusun kalimat</span></div>
+      <div class="bank" id="bank"></div>
+      <div class="feedback-row" id="feedback"></div>
+      <div class="actions">
+        <button class="btn ghost" id="checkBtn">Cek Jawaban</button>
+        <button class="btn primary" id="nextBtn" disabled>Lanjut</button>
+      </div>
+    `;
+    body.appendChild(card);
+    const bank = document.getElementById("bank");
+    shuffledTiles.forEach(word => {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.textContent = word;
+      tile.dataset.used = "false";
+      tile.onclick = () => {
+        if (tile.dataset.used === "true") return;
+        tile.dataset.used = "true";
+        tile.style.visibility = "hidden";
+        buildSelection.push(word);
+        renderBuildLine(q);
+      };
+      bank.appendChild(tile);
+    });
+    document.getElementById("checkBtn").onclick = () => checkBuild(q);
+    document.getElementById("nextBtn").onclick = nextQuestion;
+  }
+
+  renderQuizProgress();
+}
+
+function renderBuildLine(q) {
+  const line = document.getElementById("buildLine");
+  line.innerHTML = "";
+  if (buildSelection.length === 0) {
+    line.innerHTML = '<span class="placeholder">Ketuk kata di bawah untuk menyusun kalimat</span>';
+    return;
+  }
+  buildSelection.forEach((word, i) => {
+    const tile = document.createElement("div");
+    tile.className = "tile placed";
+    tile.textContent = word;
+    tile.onclick = () => {
+      buildSelection.splice(i, 1);
+      const bankTile = [...document.querySelectorAll("#bank .tile")].find(t => t.dataset.used === "true" && t.textContent === word);
+      if (bankTile) { bankTile.dataset.used = "false"; bankTile.style.visibility = "visible"; }
+      renderBuildLine(q);
+    };
+    line.appendChild(tile);
+  });
+}
+
+function checkFlashcard(btn, chosen, correct) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const isCorrect = chosen === correct;
+  if (isCorrect) quizCorrect++;
+  document.querySelectorAll("#choiceGrid .choice-btn").forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add("correct");
+    else if (b === btn) b.classList.add("incorrect");
+  });
+  const fb = document.getElementById("feedback");
+  fb.className = "feedback-row " + (isCorrect ? "correct" : "incorrect");
+  fb.innerHTML = `<span class="verdict">${isCorrect ? "✓ Benar!" : "✗ Kurang tepat"}</span>`;
+  setTimeout(nextQuestion, 700);
+}
+
+function checkDropdown(q) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const select = document.getElementById("ddInput");
+  const isCorrect = select.value === q.answer;
+  select.classList.add(isCorrect ? "correct" : "incorrect");
+  select.disabled = true;
+  if (!isCorrect) select.value = q.answer;
+  if (isCorrect) quizCorrect++;
+  const fb = document.getElementById("feedback");
+  fb.className = "feedback-row " + (isCorrect ? "correct" : "incorrect");
+  fb.innerHTML = `<span class="verdict">${isCorrect ? "✓ Benar!" : "✗ Kurang tepat"}</span><span class="tr">${q.tr}</span>`;
+  document.getElementById("checkBtn").disabled = true;
+  document.getElementById("nextBtn").disabled = false;
+}
+
+function checkBuild(q) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const isCorrect = JSON.stringify(buildSelection) === JSON.stringify(q.answer);
+  document.querySelectorAll("#bank .tile").forEach(t => t.style.pointerEvents = "none");
+  if (!isCorrect) { buildSelection = [...q.answer]; renderBuildLine(q); }
+  if (isCorrect) quizCorrect++;
+  const fb = document.getElementById("feedback");
+  fb.className = "feedback-row " + (isCorrect ? "correct" : "incorrect");
+  fb.innerHTML = `<span class="verdict">${isCorrect ? "✓ Benar!" : "✗ Kurang tepat"}</span><span class="tr">${q.tr}</span>`;
+  document.getElementById("checkBtn").disabled = true;
+  document.getElementById("nextBtn").disabled = false;
+}
+
+function nextQuestion() {
+  quizIndex++;
+  if (quizIndex >= quizQueue.length) {
+    finishQuiz();
+  } else {
+    renderQuizQuestion();
+  }
+}
+
+function finishQuiz() {
+  const total = quizQueue.length;
+  const pct = Math.round((quizCorrect / total) * 100);
+  const cs = chapterState(store, currentChapterId);
+  cs.bestScore = Math.max(cs.bestScore, pct);
+  if (pct >= 80) cs.quizPassed = true;
+  saveStore(store);
+
+  document.getElementById("finalScore").textContent = `${quizCorrect} / ${total}`;
+  const msg = document.getElementById("passMsg");
+  if (pct >= 80) {
+    msg.className = "pass-msg pass";
+    msg.textContent = `🎉 Lulus! Skor ${pct}% — Bab ini ditandai selesai.`;
+  } else {
+    msg.className = "pass-msg retry";
+    msg.textContent = `Skor ${pct}% — coba lagi sampai minimal 80% ya.`;
+  }
+  goTo("result");
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+renderDashboard();
+</script>
+</body>
+</html>
