@@ -39,6 +39,36 @@
     .chapter-grid { grid-template-columns: repeat(10, 1fr); }
   }
 
+  .content-narrow { max-width: none; margin: 0 auto; }
+  .dashboard-grid { display: block; }
+  .dashboard-side-note { display: none; }
+
+  @media (min-width: 1024px) {
+    .app { max-width: 1180px; }
+    .content-narrow { max-width: 760px; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    .dashboard-side { position: sticky; top: 24px; }
+    .dashboard-side .hero { margin-bottom: 14px; }
+    .dashboard-side-note {
+      display: block; font-size: 13px; color: var(--muted);
+      background: var(--paper-raised); border: 1px solid var(--line);
+      border-radius: 10px; padding: 12px 14px;
+    }
+    .dashboard-main .section-title { margin-top: 0; }
+    .chapter-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    .app { max-width: 980px; }
+    .chapter-list { grid-template-columns: 1fr; }
+  }
+
   /* ===== Top bar ===== */
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
@@ -319,18 +349,24 @@
       <div class="spacer"></div>
     </div>
     <div style="padding: 16px 18px 0;">
-      <div class="hero">
-        <div class="brand">NGEBUT NIHONGO</div>
-        <div class="headline">Belajar Jepang dari Nol,<br>Tanpa Guru.</div>
-        <div class="stats">
-          <div class="stat"><div class="num" id="statStreak">0</div><div class="lbl">hari beruntun</div></div>
-          <div class="stat"><div class="num" id="statDone">0/25</div><div class="lbl">bab selesai</div></div>
+      <div class="dashboard-grid">
+        <div class="dashboard-side">
+          <div class="hero">
+            <div class="brand">NGEBUT NIHONGO</div>
+            <div class="headline">Belajar Jepang dari Nol,<br>Tanpa Guru.</div>
+            <div class="stats">
+              <div class="stat"><div class="num" id="statStreak">0</div><div class="lbl">hari beruntun</div></div>
+              <div class="stat"><div class="num" id="statDone">0/25</div><div class="lbl">bab selesai</div></div>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="overallFill" style="width:0%"></div></div>
+          </div>
+          <div class="dashboard-side-note">Klik bab manapun yang sudah terbuka untuk lanjut belajar. Urutan disarankan dari atas ke bawah.</div>
         </div>
-        <div class="progress-track"><div class="progress-fill" id="overallFill" style="width:0%"></div></div>
+        <div class="dashboard-main">
+          <div class="section-title">Semua Bab</div>
+          <div class="chapter-list" id="chapterList"></div>
+        </div>
       </div>
-
-      <div class="section-title">Semua Bab</div>
-      <div class="chapter-list" id="chapterList"></div>
 
       <div class="landing-footer">© 2026 Dadik Irawan — Ngebut Nihongo</div>
     </div>
@@ -373,7 +409,7 @@
       <div class="title" id="materiTopTitle">Bab</div>
       <div class="spacer"></div>
     </div>
-    <div style="padding: 18px;">
+    <div class="content-narrow" style="padding: 18px;">
       <span class="chapter-badge" id="materiBadge">Bab 1</span>
       <h1 class="materi-title" id="materiTitle"></h1>
       <div class="materi-sub" id="materiFocus"></div>
@@ -417,7 +453,7 @@
       <div class="title">Latihan</div>
       <div class="spacer"></div>
     </div>
-    <div style="padding: 18px;">
+    <div class="content-narrow" style="padding: 18px;">
       <div class="quiz-progress" id="quizProgress"></div>
       <div id="quizBody"></div>
     </div>
@@ -425,7 +461,7 @@
 
   <!-- ================= RESULT ================= -->
   <div class="screen" id="screen-result">
-    <div style="padding: 60px 18px;">
+    <div class="content-narrow" style="padding: 60px 18px;">
       <div class="result-wrap">
         <div class="big-score" id="finalScore"></div>
         <div class="score-lbl">jawaban benar</div>
