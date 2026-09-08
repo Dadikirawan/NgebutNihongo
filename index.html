@@ -2,6 +2,9 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none';">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="index, follow">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ngebut Nihongo — Belajar Bahasa Jepang dari Nol</title>
 <style>
@@ -19,6 +22,25 @@
     --gold: #C9A227;
     --gold-soft: #FBF4DE;
   }
+  html.dark {
+    --paper: #16181D;
+    --paper-raised: #1E2128;
+    --ink: #EDEAE2;
+    --muted: #9B9488;
+    --line: #33363F;
+    --indigo: #7FA8D9;
+    --indigo-soft: #232E3E;
+    --indigo-dark: #C7DCF5;
+    --vermillion: #E27A63;
+    --vermillion-soft: #3A2620;
+    --gold: #E0BC5C;
+    --gold-soft: #35301C;
+  }
+  html.dark body { background: var(--paper); }
+  html.dark .hero { background: linear-gradient(135deg, #223250, #1A2438); }
+  html.dark .cb-btn, html.dark .start-btn, html.dark .cta-btn.primary,
+  html.dark .btn.primary, html.dark .landing-cta { color: #16181D; }
+  html.dark img, html.dark .progress-fill { filter: none; }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -89,6 +111,11 @@
   .topbar .back-btn { background: none; border: none; font-size: 20px; color: var(--indigo); cursor: pointer; padding: 4px 8px; }
   .topbar .title { font-weight: 700; font-size: 15px; }
   .topbar .spacer { width: 32px; }
+  .dark-toggle-btn {
+    background: var(--paper-raised); border: 1px solid var(--line); border-radius: 8px;
+    width: 34px; height: 34px; font-size: 15px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+  }
 
   /* ===== Landing ===== */
   .landing-wrap { padding: 10px 4px 40px; position: relative; overflow: hidden; }
@@ -147,6 +174,27 @@
 
   .progress-track { height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin-top: 14px; overflow: hidden; position: relative; z-index: 1; }
   .progress-fill { height: 100%; background: var(--gold); border-radius: 4px; transition: width 0.4s ease; }
+
+  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; position: relative; z-index: 1; }
+  .badge-chip {
+    background: rgba(255,255,255,0.14); border-radius: 20px; padding: 5px 11px;
+    font-size: 12px; display: flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .badge-chip .ic { font-size: 14px; }
+
+  .toast-wrap {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(20px);
+    z-index: 50; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none; width: calc(100% - 36px); max-width: 420px;
+  }
+  .toast-wrap.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast-card {
+    background: var(--indigo-dark); color: #fff; border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25); font-size: 14px; display: flex; align-items: center; gap: 10px;
+  }
+  .toast-card .toast-ic { font-size: 22px; }
+  .toast-card .toast-title { font-weight: 700; font-size: 13px; }
+  .toast-card .toast-sub { font-size: 12px; opacity: 0.85; margin-top: 1px; }
 
   .section-title { font-size: 14px; font-weight: 700; color: var(--muted); margin: 22px 0 10px; }
 
@@ -420,7 +468,7 @@
     <div class="topbar">
       <button class="back-btn" onclick="goTo('landing')">←</button>
       <div class="title">Ngebut Nihongo</div>
-      <div class="spacer"></div>
+      <button class="dark-toggle-btn" id="darkToggleBtn" onclick="toggleDarkMode()" title="Ganti mode gelap/terang">🌙</button>
     </div>
     <div style="padding: 16px 18px 0;">
       <div class="dashboard-grid">
@@ -433,6 +481,7 @@
               <div class="stat"><div class="num" id="statDone">0/25</div><div class="lbl">bab selesai</div></div>
             </div>
             <div class="progress-track"><div class="progress-fill" id="overallFill" style="width:0%"></div></div>
+            <div class="badge-row" id="badgeRow"></div>
           </div>
           <div class="continue-banner" id="continueBanner" style="display:none;">
             <div class="cb-label" id="cbLabel"></div>
@@ -551,6 +600,7 @@
     </div>
   </div>
 
+  <div class="toast-wrap" id="toastWrap"></div>
 </div>
 
 <script>
@@ -1484,22 +1534,109 @@ const CHAPTERS = [
 
 const TOTAL_CHAPTERS = 25;
 
+const KANA_SET_LABELS = {
+  hiraganaBase: "Hiragana Dasar",
+  hiraganaDakuten: "Hiragana Dakuten",
+  katakanaBase: "Katakana Dasar",
+  katakanaDakuten: "Katakana Dakuten"
+};
+
 /* =========================================================
    STORAGE
    ========================================================= */
 const STORE_KEY = "ngebutNihongoProgress";
 
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function defaultStore() {
+  return { chapters: {}, lastActive: null, streak: 0, kanaScores: {}, badges: {}, darkMode: false, hadPerfectScore: false };
+}
+
 function loadStore() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return { chapters: {}, lastActive: null, streak: 0 };
-    return JSON.parse(raw);
+    if (!raw) return defaultStore();
+    const parsed = JSON.parse(raw);
+    return sanitizeStore(parsed);
   } catch (e) {
-    return { chapters: {}, lastActive: null, streak: 0 };
+    return defaultStore();
   }
 }
+
+// Defends against corrupted or manually-edited localStorage data (e.g. via DevTools)
+// so a malformed value can never crash the app — any invalid field silently falls
+// back to a safe default instead of propagating bad types through the app.
+function sanitizeStore(raw) {
+  const safe = defaultStore();
+  if (!raw || typeof raw !== "object") return safe;
+
+  if (raw.chapters && typeof raw.chapters === "object" && !Array.isArray(raw.chapters)) {
+    Object.keys(raw.chapters).forEach(id => {
+      const idNum = parseInt(id, 10);
+      if (!Number.isInteger(idNum) || idNum < 1 || idNum > TOTAL_CHAPTERS) return;
+      const cs = raw.chapters[id];
+      if (cs && typeof cs === "object") {
+        safe.chapters[idNum] = {
+          vocab: !!cs.vocab,
+          materi: !!cs.materi,
+          quizPassed: !!cs.quizPassed,
+          bestScore: (typeof cs.bestScore === "number" && cs.bestScore >= 0 && cs.bestScore <= 100) ? cs.bestScore : 0
+        };
+      }
+    });
+  }
+
+  if (typeof raw.lastActive === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.lastActive)) {
+    safe.lastActive = raw.lastActive;
+  }
+  safe.streak = (typeof raw.streak === "number" && raw.streak >= 0 && Number.isFinite(raw.streak)) ? Math.floor(raw.streak) : 0;
+  safe.introDone = !!raw.introDone;
+  safe.darkMode = !!raw.darkMode;
+  safe.hadPerfectScore = !!raw.hadPerfectScore;
+
+  if (raw.kanaScores && typeof raw.kanaScores === "object" && !Array.isArray(raw.kanaScores)) {
+    Object.keys(KANA_SET_LABELS).forEach(key => {
+      const v = raw.kanaScores[key];
+      if (typeof v === "number" && v >= 0 && v <= 100) safe.kanaScores[key] = v;
+    });
+  }
+
+  if (raw.badges && typeof raw.badges === "object" && !Array.isArray(raw.badges)) {
+    Object.keys(raw.badges).forEach(key => {
+      if (typeof key === "string" && key.length < 60) safe.badges[key] = true;
+    });
+  }
+
+  if (raw.lastVisited && typeof raw.lastVisited === "object") {
+    const type = raw.lastVisited.type;
+    if (type === "intro") {
+      safe.lastVisited = { type: "intro" };
+    } else if (type === "chapter") {
+      const idNum = parseInt(raw.lastVisited.id, 10);
+      if (Number.isInteger(idNum) && idNum >= 1 && idNum <= TOTAL_CHAPTERS) {
+        safe.lastVisited = { type: "chapter", id: idNum };
+      }
+    }
+  }
+
+  return safe;
+}
+
 function saveStore(store) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  } catch (e) {
+    // Storage full or unavailable (e.g. private browsing) — fail silently,
+    // the session still works, progress just won't persist across reloads.
+  }
 }
 function chapterState(store, id) {
   if (!store.chapters[id]) store.chapters[id] = { vocab: false, materi: false, quizPassed: false, bestScore: 0 };
@@ -1527,6 +1664,107 @@ let quizIndex = 0;
 let quizCorrect = 0;
 let quizAnswered = false;
 let buildSelection = [];
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+function applyDarkMode() {
+  document.documentElement.classList.toggle("dark", !!store.darkMode);
+  const btn = document.getElementById("darkToggleBtn");
+  if (btn) btn.textContent = store.darkMode ? "☀️" : "🌙";
+}
+function toggleDarkMode() {
+  store.darkMode = !store.darkMode;
+  saveStore(store);
+  applyDarkMode();
+}
+applyDarkMode();
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+const BADGE_DEFS = [
+  { id: "streak3", icon: "🔥", title: "3 Hari Beruntun", check: s => s.streak >= 3 },
+  { id: "streak7", icon: "🔥", title: "7 Hari Beruntun", check: s => s.streak >= 7 },
+  { id: "streak30", icon: "🔥", title: "30 Hari Beruntun", check: s => s.streak >= 30 },
+  { id: "kanaDone", icon: "あ", title: "Hiragana & Katakana Lulus", check: s => !!s.introDone },
+  { id: "chapters5", icon: "🎯", title: "5 Bab Selesai", check: s => countDoneChapters(s) >= 5 },
+  { id: "chapters10", icon: "🎯", title: "10 Bab Selesai", check: s => countDoneChapters(s) >= 10 },
+  { id: "chapters25", icon: "🏆", title: "Semua 25 Bab Selesai", check: s => countDoneChapters(s) >= 25 },
+  { id: "perfectScore", icon: "💯", title: "Skor Sempurna", check: s => !!s.hadPerfectScore }
+];
+
+function countDoneChapters(s) {
+  return Object.keys(s.chapters).filter(id => {
+    const cs = s.chapters[id];
+    return cs && cs.vocab && cs.materi && cs.quizPassed;
+  }).length;
+}
+
+// Compares current stats against BADGE_DEFS, saves any newly-earned badge,
+// and queues a toast for it. Safe to call often (dashboard render, quiz finish) —
+// already-earned badges are skipped silently.
+function checkBadges() {
+  if (!store.badges) store.badges = {};
+  const newlyEarned = [];
+  BADGE_DEFS.forEach(b => {
+    if (!store.badges[b.id] && b.check(store)) {
+      store.badges[b.id] = true;
+      newlyEarned.push(b);
+    }
+  });
+  if (newlyEarned.length > 0) {
+    saveStore(store);
+    newlyEarned.forEach(b => queueToast(b.icon, "Pencapaian baru!", b.title));
+  }
+  return newlyEarned;
+}
+
+function renderBadgeRow() {
+  const row = document.getElementById("badgeRow");
+  if (!row) return;
+  row.innerHTML = "";
+  const earned = BADGE_DEFS.filter(b => store.badges && store.badges[b.id]);
+  earned.forEach(b => {
+    const chip = document.createElement("div");
+    chip.className = "badge-chip";
+    chip.title = b.title;
+    chip.innerHTML = `<span class="ic">${b.icon}</span><span>${escapeHtml(b.title)}</span>`;
+    row.appendChild(chip);
+  });
+}
+
+/* =========================================================
+   TOAST NOTIFICATIONS
+   ========================================================= */
+let toastQueue = [];
+let toastShowing = false;
+
+function queueToast(icon, title, sub) {
+  toastQueue.push({ icon, title, sub });
+  if (!toastShowing) showNextToast();
+}
+
+function showNextToast() {
+  if (toastQueue.length === 0) { toastShowing = false; return; }
+  toastShowing = true;
+  const { icon, title, sub } = toastQueue.shift();
+  const wrap = document.getElementById("toastWrap");
+  wrap.innerHTML = `
+    <div class="toast-card">
+      <span class="toast-ic">${icon}</span>
+      <span>
+        <div class="toast-title">${escapeHtml(title)}</div>
+        <div class="toast-sub">${escapeHtml(sub)}</div>
+      </span>
+    </div>
+  `;
+  requestAnimationFrame(() => wrap.classList.add("show"));
+  setTimeout(() => {
+    wrap.classList.remove("show");
+    setTimeout(showNextToast, 350);
+  }, 2600);
+}
 
 /* =========================================================
    NAVIGATION
@@ -1610,6 +1848,8 @@ function renderDashboard() {
   document.getElementById("overallFill").style.width = Math.round((doneCount / TOTAL_CHAPTERS) * 100) + "%";
 
   renderContinueBanner();
+  checkBadges();
+  renderBadgeRow();
 
   const list = document.getElementById("chapterList");
   list.innerHTML = "";
@@ -1637,8 +1877,8 @@ function renderDashboard() {
     card.innerHTML = `
       <div class="num">${ch.id}</div>
       <div class="info">
-        <div class="t">${ch.title}</div>
-        <div class="s">${done ? "✓ Selesai" : ch.focus}</div>
+        <div class="t">${escapeHtml(ch.title)}</div>
+        <div class="s">${done ? "✓ Selesai" : escapeHtml(ch.focus)}</div>
       </div>
       <div class="chev">›</div>
     `;
@@ -1709,13 +1949,6 @@ function openIntro() {
   goTo("intro");
 }
 
-const KANA_SET_LABELS = {
-  hiraganaBase: "Hiragana Dasar",
-  hiraganaDakuten: "Hiragana Dakuten",
-  katakanaBase: "Katakana Dasar",
-  katakanaDakuten: "Katakana Dakuten"
-};
-
 function kanaScore(key) {
   if (!store.kanaScores) store.kanaScores = {};
   return store.kanaScores[key] || 0;
@@ -1732,7 +1965,7 @@ function buildKanaSection(title, data, key) {
   data.forEach(([ch, rj]) => {
     const cell = document.createElement("div");
     cell.className = "kana-cell";
-    cell.innerHTML = `<div class="ch">${ch}</div><div class="rj">${rj}</div>`;
+    cell.innerHTML = `<div class="ch">${escapeHtml(ch)}</div><div class="rj">${escapeHtml(rj)}</div>`;
     grid.appendChild(cell);
   });
   section.appendChild(grid);
@@ -1821,7 +2054,7 @@ function openChapter(id) {
 }
 
 function vocabRow(v) {
-  return `<div class="vocab-row"><span class="jp">${v[0]}</span><span class="rj">${v[1]}</span><span class="id">${v[2]}</span></div>`;
+  return `<div class="vocab-row"><span class="jp">${escapeHtml(v[0])}</span><span class="rj">${escapeHtml(v[1])}</span><span class="id">${escapeHtml(v[2])}</span></div>`;
 }
 
 /* =========================================================
@@ -1914,8 +2147,8 @@ function renderQuizQuestion() {
     const [meaning, correct, options] = item.data;
     if (item.kana) {
       card.innerHTML = `
-        <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Kuis ${KANA_SET_LABELS[kanaQuizKey]}</div>
-        <div class="kana-prompt">${meaning}</div>
+        <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Kuis ${escapeHtml(KANA_SET_LABELS[kanaQuizKey])}</div>
+        <div class="kana-prompt">${escapeHtml(meaning)}</div>
         <div class="q-sub" style="text-align:center;">Ini dibaca apa?</div>
         <div class="choice-grid" id="choiceGrid"></div>
         <div class="feedback-row" id="feedback"></div>
@@ -1923,7 +2156,7 @@ function renderQuizQuestion() {
     } else {
       card.innerHTML = `
         <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Tebak Kosakata</div>
-        <div class="q-prompt">${meaning}</div>
+        <div class="q-prompt">${escapeHtml(meaning)}</div>
         <div class="q-sub">Pilih kata Jepang yang cocok</div>
         <div class="choice-grid" id="choiceGrid"></div>
         <div class="feedback-row" id="feedback"></div>
@@ -1943,9 +2176,9 @@ function renderQuizQuestion() {
     card.innerHTML = `
       <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Lengkapi Kalimat</div>
       <div class="sentence-line">
-        <span>${q.before}</span>
-        <select class="blank" id="ddInput"><option value="">?</option>${q.options.map(o=>`<option value="${o}">${o}</option>`).join("")}</select>
-        <span>${q.after}</span>
+        <span>${escapeHtml(q.before)}</span>
+        <select class="blank" id="ddInput"><option value="">?</option>${q.options.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("")}</select>
+        <span>${escapeHtml(q.after)}</span>
       </div>
       <div class="feedback-row" id="feedback"></div>
       <div class="actions">
@@ -1962,7 +2195,7 @@ function renderQuizQuestion() {
     const shuffledTiles = shuffle(q.tiles);
     card.innerHTML = `
       <div class="q-kind">Soal ${quizIndex+1} dari ${quizQueue.length} · Susun Kalimat</div>
-      <div class="q-prompt" style="font-size:16px;">${q.prompt}</div>
+      <div class="q-prompt" style="font-size:16px;">${escapeHtml(q.prompt)}</div>
       <div class="build-line" id="buildLine"><span class="placeholder">Ketuk kata di bawah untuk menyusun kalimat</span></div>
       <div class="bank" id="bank"></div>
       <div class="feedback-row" id="feedback"></div>
@@ -2042,7 +2275,7 @@ function checkDropdown(q) {
   if (isCorrect) quizCorrect++;
   const fb = document.getElementById("feedback");
   fb.className = "feedback-row " + (isCorrect ? "correct" : "incorrect");
-  fb.innerHTML = `<span class="verdict">${isCorrect ? "✓ Benar!" : "✗ Kurang tepat"}</span><span class="tr">${q.tr}</span>`;
+  fb.innerHTML = `<span class="verdict">${isCorrect ? "✓ Benar!" : "✗ Kurang tepat"}</span><span class="tr">${escapeHtml(q.tr)}</span>`;
   document.getElementById("checkBtn").disabled = true;
   document.getElementById("nextBtn").disabled = false;
 }
@@ -2056,7 +2289,7 @@ function checkBuild(q) {
   if (isCorrect) quizCorrect++;
   const fb = document.getElementById("feedback");
   fb.className = "feedback-row " + (isCorrect ? "correct" : "incorrect");
-  fb.innerHTML = `<span class="verdict">${isCorrect ? "✓ Benar!" : "✗ Kurang tepat"}</span><span class="tr">${q.tr}</span>`;
+  fb.innerHTML = `<span class="verdict">${isCorrect ? "✓ Benar!" : "✗ Kurang tepat"}</span><span class="tr">${escapeHtml(q.tr)}</span>`;
   document.getElementById("checkBtn").disabled = true;
   document.getElementById("nextBtn").disabled = false;
 }
@@ -2083,6 +2316,7 @@ function finishQuiz() {
     const allKeys = Object.keys(KANA_SET_LABELS);
     const allPassed = allKeys.every(k => (store.kanaScores[k] || 0) >= 80);
     if (allPassed) store.introDone = true;
+    if (pct === 100) store.hadPerfectScore = true;
     saveStore(store);
 
     if (pct >= 80) {
@@ -2098,6 +2332,7 @@ function finishQuiz() {
     const cs = chapterState(store, currentChapterId);
     cs.bestScore = Math.max(cs.bestScore, pct);
     if (pct >= 80) cs.quizPassed = true;
+    if (pct === 100) store.hadPerfectScore = true;
     saveStore(store);
 
     if (pct >= 80) {
@@ -2111,6 +2346,7 @@ function finishQuiz() {
     resultBackBtn.onclick = () => goTo("materi");
   }
 
+  checkBadges();
   goTo("result");
 }
 
